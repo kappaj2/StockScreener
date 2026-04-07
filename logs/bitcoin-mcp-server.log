@@ -48,3 +48,13 @@
 2026-04-07T10:14:21.254+04:00  INFO 27168 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
 2026-04-07T10:14:21.256+04:00  WARN 27168 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
 2026-04-07T10:14:21.269+04:00  INFO 27168 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.732 seconds (process running for 0.976)
+2026-04-07T13:23:47.851+04:00  INFO 40443 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 40443 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T13:23:47.852+04:00  INFO 40443 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T13:23:48.353+04:00  INFO 40443 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T13:23:48.354+04:00  INFO 40443 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T13:23:48.354+04:00  INFO 40443 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T13:23:48.354+04:00  INFO 40443 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T13:23:48.355+04:00  INFO 40443 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T13:23:48.401+04:00  INFO 40443 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T13:23:48.402+04:00  WARN 40443 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T13:23:48.417+04:00  INFO 40443 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.804 seconds (process running for 1.064)

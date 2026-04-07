@@ -3,10 +3,9 @@ package za.co.sfh.stocklistener.processor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tools.jackson.databind.ObjectMapper;
-import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
+import za.co.sfh.stocklistener.payloads.BreakoutAnalysis;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Files;
@@ -14,9 +13,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Replays a recorded fixture file through the real handler stack.
@@ -45,10 +50,21 @@ class BarReplayTest {
 
         // Wire up the handler stack without Spring context
         ObjectMapper objectMapper = new ObjectMapper();
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper);
+
+        // Stub Ollama — returns empty analysis so breakout candidates are logged but not emitted
+        OllamaBreakoutAnalyser ollamaAnalyser = mock(OllamaBreakoutAnalyser.class);
+        when(ollamaAnalyser.analyseAsync(anyString(), any(), anyDouble(), anyDouble(), anyDouble()))
+                .thenReturn(CompletableFuture.completedFuture(BreakoutAnalysis.empty()));
+
+        // Stub SignalStore — captures any confirmed signals without needing Spring context
+        za.co.sfh.stocklistener.signals.SignalStore signalStore =
+                mock(za.co.sfh.stocklistener.signals.SignalStore.class);
+
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, ollamaAnalyser, signalStore);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());
+        processor.startProcessing();
 
         for (String line : lines) {
             processor.offer(line);
@@ -66,6 +82,7 @@ class BarReplayTest {
     private void injectFilterDefaults(AggregateMinuteBarHandler handler) throws Exception {
         setField(handler, "minClose", 2.0);
         setField(handler, "minVolume", 50_000L);
+        setField(handler, "minConfidence", 70);
     }
 
     @SuppressWarnings("unchecked")

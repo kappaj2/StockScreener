@@ -4,6 +4,14 @@ spring:
   threads:
     virtual:
       enabled: true
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3:8b
+        options:
+          temperature: 0.1   # low = deterministic JSON output
+          format: json       # forces model to respond with JSON only
 
 server:
   port: 8000
@@ -15,3 +23,7 @@ massive:
 filter:
   min-close: 2.0
   min-volume: 50000
+
+ollama:
+  breakout:
+    min-confidence: 70   # minimum Ollama confidence % to emit a signal

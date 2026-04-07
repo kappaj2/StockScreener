@@ -1,11 +1,13 @@
 package za.co.sfh.stocklistener.processor.states;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayDeque;
+import java.util.List;
 
 @Slf4j
 public final class SymbolState {
@@ -16,7 +18,9 @@ public final class SymbolState {
 
     private String symbol;
 
+    @Getter
     private double avgRange;
+    @Getter
     private double avgVolume;
 
     private double premarketHigh = Double.MIN_VALUE;
@@ -74,12 +78,21 @@ public final class SymbolState {
                 bar.close() > premarketHigh;
     }
 
+    public List<AggregateMinuteBar> getCandles() {
+        return List.copyOf(candles);
+    }
+
+    public double getPremarketHigh() {
+        return premarketHigh == Double.MIN_VALUE ? 0 : premarketHigh;
+    }
+
     private boolean isPremarket(AggregateMinuteBar bar) {
-        // TODO: convert to ET and check 04:00–09:30
         var txDateTime = Instant.ofEpochMilli(bar.startTimestampMs())
                 .atZone(ZoneId.of("America/New_York"));
         log.debug("Transaction time: [{}]", txDateTime);
-
-        return true;
+        int hour = txDateTime.getHour();
+        int minute = txDateTime.getMinute();
+        // Pre-market: 04:00–09:29 ET
+        return hour >= 4 && (hour < 9 || (hour == 9 && minute < 30));
     }
 }
