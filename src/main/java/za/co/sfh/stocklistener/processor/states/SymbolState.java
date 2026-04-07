@@ -4,12 +4,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayDeque;
 import java.util.List;
 
 @Slf4j
+@Getter
 public final class SymbolState {
 
     private static final int MAX_CANDLES = 20;
@@ -17,10 +16,7 @@ public final class SymbolState {
     private final ArrayDeque<AggregateMinuteBar> candles = new ArrayDeque<>();
 
     private String symbol;
-
-    @Getter
     private double avgRange;
-    @Getter
     private double avgVolume;
 
     private double premarketHigh = Double.MIN_VALUE;
@@ -70,12 +66,33 @@ public final class SymbolState {
     }
 
     public boolean isBreakout(AggregateMinuteBar bar) {
-        double range = bar.high() - bar.low();
+        if (candles.size() < 2) return false;
 
-        log.debug("[{}] Breakout check [high: {}; low: {}; range: {}; avgRange: {}; avgVolume: {}]", symbol, bar.high(), bar.low(), range, avgRange, avgVolume);
-        return range > 2 * avgRange &&
+        AggregateMinuteBar[] arr = candles.toArray(new AggregateMinuteBar[0]);
+        AggregateMinuteBar previousBar = arr[arr.length - 2];
+
+        if (bar.open() <= previousBar.close()) return false;
+        if (previousBar.close() <= previousBar.open()) return false;
+
+        double range = bar.high() - bar.low();
+        log.debug("Range is [symbol: {}; bar high: {}; low: {}; range: {}]", symbol, bar.high(), bar.low(), range);
+
+        if (range < 0.05 * bar.close()) return false;
+
+        double previousRange = previousBar.high() - previousBar.low();
+        if (previousRange < 0.05 * previousBar.close()) return false;
+
+        var isBreakout = range > 2 * avgRange &&
                 bar.volume() > 2 * avgVolume &&
-                bar.close() > premarketHigh;
+                bar.close() > premarketHigh; // to do - remove premarket high check
+
+        log.debug("Breakout check [symbol: {}; high: {}; low: {}; range: {}; avgRange: {}; avgVolume: {}; isBeakout: {}]", symbol, bar.high(), bar.low(), range, avgRange, avgVolume, isBreakout);
+
+        if (isBreakout) {
+            log.debug("Previous bar [{}]", previousBar);
+            log.debug("This bar [{}]", bar);
+        }
+        return isBreakout;
     }
 
     public List<AggregateMinuteBar> getCandles() {
@@ -87,8 +104,7 @@ public final class SymbolState {
     }
 
     private boolean isPremarket(AggregateMinuteBar bar) {
-        var txDateTime = Instant.ofEpochMilli(bar.startTimestampMs())
-                .atZone(ZoneId.of("America/New_York"));
+        var txDateTime = bar.startTimestampMs();
         log.debug("Transaction time: [{}]", txDateTime);
         int hour = txDateTime.getHour();
         int minute = txDateTime.getMinute();

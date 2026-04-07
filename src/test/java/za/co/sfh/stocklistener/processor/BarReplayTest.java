@@ -2,7 +2,9 @@ package za.co.sfh.stocklistener.processor;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import za.co.sfh.stocklistener.payloads.BreakoutAnalysis;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 
@@ -49,7 +51,10 @@ class BarReplayTest {
         assertThat(lines).as("fixture must not be empty").isNotEmpty();
 
         // Wire up the handler stack without Spring context
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .build();
 
         // Stub Ollama — returns empty analysis so breakout candidates are logged but not emitted
         OllamaBreakoutAnalyser ollamaAnalyser = mock(OllamaBreakoutAnalyser.class);

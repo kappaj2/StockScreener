@@ -17,6 +17,7 @@ public class JacksonConfig {
     JsonMapperBuilderCustomizer jacksonCustomizer() {
         return builder -> {
             builder.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            builder.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
             builder.enable(EnumFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
             builder.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
             builder.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);

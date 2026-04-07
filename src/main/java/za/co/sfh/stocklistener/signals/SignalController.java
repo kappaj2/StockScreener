@@ -2,10 +2,14 @@ package za.co.sfh.stocklistener.signals;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import za.co.sfh.stocklistener.processor.AggregateMinuteBarHandler;
+import za.co.sfh.stocklistener.processor.states.SymbolState;
 
 import java.util.List;
 
@@ -14,8 +18,9 @@ import java.util.List;
  * and fire alerts via mcp__tradingview__alert_create.
  *
  * Endpoints:
- *   GET  /api/signals/pending  — returns all queued signals as JSON (does NOT consume them)
- *   DELETE /api/signals/ack    — clears the queue after the scheduled task has fired all alerts
+ *   GET  /api/signals/pending          — returns all queued signals as JSON (does NOT consume them)
+ *   DELETE /api/signals/ack            — clears the queue after the scheduled task has fired all alerts
+ *   GET  /api/signals/state/{symbol}   — returns the SymbolState for the given ticker
  */
 @Slf4j
 @RestController
@@ -24,6 +29,7 @@ import java.util.List;
 public class SignalController {
 
     private final SignalStore signalStore;
+    private final AggregateMinuteBarHandler aggregateMinuteBarHandler;
 
     /**
      * Returns all signals currently waiting to be fired as TradingView alerts.
@@ -44,5 +50,16 @@ public class SignalController {
     public void ack() {
         log.info("DELETE /api/signals/ack — clearing signal queue");
         signalStore.ackAll();
+    }
+
+    /**
+     * Returns the SymbolState for the given ticker symbol, or 404 if not yet tracked.
+     */
+    @GetMapping("/state/{symbol}")
+    public ResponseEntity<SymbolState> state(@PathVariable String symbol) {
+        log.debug("GET /api/signals/state/{}", symbol);
+        return aggregateMinuteBarHandler.getState(symbol)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

@@ -11,6 +11,7 @@ import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +34,10 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     @Value("${ollama.breakout.min-confidence:70}")
     private int minConfidence;
 
+    public Optional<SymbolState> getState(String symbol) {
+        return Optional.ofNullable(stateMap.get(symbol));
+    }
+
     @Override
     public boolean supports(String eventType) {
         return "AM".equals(eventType);
@@ -44,7 +49,14 @@ public class AggregateMinuteBarHandler implements MessageHandler {
         log.debug("{}", bar);
 
         // Pre-filter: ignore low-price and low-volume symbols
+        // Vol is 50 000
+
         if (bar.close() < minClose || bar.volume() < minVolume) {
+            return;
+        }
+
+        if (bar.high()< bar.low()){
+            log.debug("No interested in shorting at the moment: [symbol: {}; high: {}; low: {}]", bar.symbol(), bar.high(), bar.low());
             return;
         }
 
@@ -62,6 +74,9 @@ public class AggregateMinuteBarHandler implements MessageHandler {
                     state.getAvgRange(),
                     state.getAvgVolume()
             ).thenAccept(analysis -> {
+
+                log.info("Ollama analysis: [bar symbol:{}; analysis: {}]", bar.symbol(), analysis);
+
                 if (analysis.confirmed() && analysis.confidence() >= minConfidence) {
                     log.info("🚀 SIGNAL [{}] confidence={}% entry={} stop={} target={} risk={} | {}",
                             bar.symbol(), analysis.confidence(),

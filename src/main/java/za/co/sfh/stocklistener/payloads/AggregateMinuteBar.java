@@ -1,6 +1,10 @@
 package za.co.sfh.stocklistener.payloads;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import tools.jackson.databind.annotation.JsonDeserialize;
+
+import java.time.ZonedDateTime;
 
 /**
  * Polygon Aggregate Minute Bar event — ev: "AM".
@@ -21,7 +25,9 @@ public record AggregateMinuteBar(
         @JsonProperty("l") double low,               // low price for this bar
         @JsonProperty("a") double todayVwap,         // today's accumulated VWAP
         @JsonProperty("z") int avgTradeSize,      // average trade size
-        @JsonProperty("s") long startTimestampMs,  // bar start (epoch ms)
-        @JsonProperty("e") long endTimestampMs     // bar end (epoch ms)
+        @JsonDeserialize(using = EpochMsDeserializer.class)
+        @JsonProperty("s") ZonedDateTime startTimestampMs,  // bar start (ET)
+        @JsonDeserialize(using = EpochMsDeserializer.class)
+        @JsonProperty("e") ZonedDateTime endTimestampMs     // bar end (ET)
 ) {
 }

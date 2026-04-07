@@ -8,7 +8,7 @@ spring:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: qwen3:8b
+        model: qwen3:8b #qwen3:8b
         options:
           temperature: 0.1   # low = deterministic JSON output
           format: json       # forces model to respond with JSON only
@@ -20,10 +20,16 @@ massive:
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
 
+# Filter stocks before we show interest. Bar must be at least 2 dollar and volume must be at least 50k
 filter:
-  min-close: 2.0
-  min-volume: 50000
+  min-close: 0.1
+  min-volume: 500
 
 ollama:
   breakout:
     min-confidence: 70   # minimum Ollama confidence % to emit a signal
+
+logging:
+  level:
+    ROOT: INFO
+    za.co.sfh: DEBUG
