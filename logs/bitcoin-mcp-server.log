@@ -1,0 +1,50 @@
+2026-04-07T09:08:11.654+04:00  INFO 19222 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 19222 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T09:08:11.655+04:00  INFO 19222 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T09:08:12.162+04:00  INFO 19222 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T09:08:12.163+04:00  INFO 19222 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T09:08:12.163+04:00  INFO 19222 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T09:08:12.163+04:00  INFO 19222 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T09:08:12.164+04:00  INFO 19222 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T09:08:12.215+04:00  INFO 19222 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T09:08:12.217+04:00  WARN 19222 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T09:08:12.234+04:00  INFO 19222 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.792 seconds (process running for 1.077)
+2026-04-07T09:16:26.050+04:00  INFO 20473 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 20473 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T09:16:26.051+04:00  INFO 20473 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T09:16:26.503+04:00  INFO 20473 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T09:16:26.504+04:00  INFO 20473 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T09:16:26.504+04:00  INFO 20473 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T09:16:26.504+04:00  INFO 20473 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T09:16:26.505+04:00  INFO 20473 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T09:16:26.550+04:00  INFO 20473 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T09:16:26.552+04:00  WARN 20473 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T09:16:26.565+04:00  INFO 20473 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.721 seconds (process running for 0.951)
+2026-04-07T09:22:20.204+04:00  INFO 22164 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 22164 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T09:22:20.205+04:00  INFO 22164 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T09:22:20.757+04:00  INFO 22164 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T09:22:20.758+04:00  INFO 22164 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T09:22:20.758+04:00  INFO 22164 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T09:22:20.758+04:00  INFO 22164 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T09:22:20.759+04:00  INFO 22164 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T09:22:20.841+04:00  INFO 22164 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T09:22:20.844+04:00  WARN 22164 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T09:22:20.875+04:00  INFO 22164 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.913 seconds (process running for 1.218)
+2026-04-07T10:09:04.542+04:00  INFO 25858 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 25858 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T10:09:04.543+04:00  INFO 25858 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T10:09:05.020+04:00  INFO 25858 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T10:09:05.020+04:00  INFO 25858 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T10:09:05.020+04:00  INFO 25858 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T10:09:05.021+04:00  INFO 25858 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T10:09:05.021+04:00  INFO 25858 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T10:09:05.065+04:00  INFO 25858 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T10:09:05.067+04:00  WARN 25858 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T10:09:05.084+04:00  INFO 25858 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.774 seconds (process running for 1.015)
+2026-04-07T10:14:20.764+04:00  INFO 27168 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Starting BitconmcpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 27168 (/opt/mcp_servers/server/jars/bitcoinmcp-0.0.1-SNAPSHOT.jar started by andrekapp in /opt/java-code/springkodierer/SpringKordierer/stocklistener)
+2026-04-07T10:14:20.765+04:00  INFO 27168 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-04-07T10:14:21.208+04:00  INFO 27168 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable tools capabilities, notification: true
+2026-04-07T10:14:21.208+04:00  INFO 27168 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Registered tools: 2
+2026-04-07T10:14:21.208+04:00  INFO 27168 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable resources capabilities, notification: true
+2026-04-07T10:14:21.208+04:00  INFO 27168 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable prompts capabilities, notification: true
+2026-04-07T10:14:21.209+04:00  INFO 27168 --- [bitconmcp] [main] o.s.a.m.s.a.McpServerAutoConfiguration   : Enable completions capabilities
+2026-04-07T10:14:21.254+04:00  INFO 27168 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client initialize request - Protocol: 2025-11-25, Capabilities: ClientCapabilities[experimental=null, roots=RootCapabilities[listChanged=null], sampling=null], Info: Implementation[name=claude-code, version=2.1.91]
+2026-04-07T10:14:21.256+04:00  WARN 27168 --- [bitconmcp] [pool-2-thread-1] i.m.server.McpAsyncServer                : Client requested unsupported protocol version: 2025-11-25, so the server will suggest the 2024-11-05 version instead
+2026-04-07T10:14:21.269+04:00  INFO 27168 --- [bitconmcp] [main] za.sk.bitconmcp.BitconmcpApplication     : Started BitconmcpApplication in 0.732 seconds (process running for 0.976)

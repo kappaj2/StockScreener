@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: stocklistener
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8000
+
+massive:
+  api-key: ${MASSIVE_API_KEY}
+  symbols: AM.*
+
+filter:
+  min-close: 2.0
+  min-volume: 50000
