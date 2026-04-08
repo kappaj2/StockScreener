@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.sfh.stocklistener.processor.AggregateMinuteBarHandler;
@@ -50,6 +52,17 @@ public class SignalController {
     public void ack() {
         log.info("DELETE /api/signals/ack — clearing signal queue");
         signalStore.ackAll();
+    }
+
+    /**
+     * Updates the news headline for a specific signal.
+     * Called by the external news scanner when a relevant news item is found.
+     */
+    @PutMapping("/{id}/news")
+    public ResponseEntity<Void> updateNews(@PathVariable String id, @RequestBody String news) {
+        log.info("PUT /api/signals/{}/news — headline: {}", id, news);
+        signalStore.updateNews(id, news);
+        return ResponseEntity.ok().build();
     }
 
     /**

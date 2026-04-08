@@ -3,6 +3,7 @@ package za.co.sfh.stocklistener.payloads;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 
@@ -25,8 +26,10 @@ public record AggregateMinuteBar(
         @JsonProperty("l") double low,               // low price for this bar
         @JsonProperty("a") double todayVwap,         // today's accumulated VWAP
         @JsonProperty("z") int avgTradeSize,      // average trade size
+        @JsonSerialize(using = EpochMsSerializer.class)
         @JsonDeserialize(using = EpochMsDeserializer.class)
         @JsonProperty("s") ZonedDateTime startTimestampMs,  // bar start (ET)
+        @JsonSerialize(using = EpochMsSerializer.class)
         @JsonDeserialize(using = EpochMsDeserializer.class)
         @JsonProperty("e") ZonedDateTime endTimestampMs     // bar end (ET)
 ) {

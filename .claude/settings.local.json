@@ -10,7 +10,17 @@
       "mcp__idea__search_in_files_by_text",
       "Bash(git checkout:*)",
       "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(list\\(d[0].keys\\(\\)\\) if isinstance\\(d,list\\) else list\\(d.keys\\(\\)\\)\\)\")",
-      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\)\\); b=d[0]; print\\('s:', b['s'], 'e:', b['e']\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\)\\); b=d[0]; print\\('s:', b['s'], 'e:', b['e']\\)\")",
+      "Bash(xargs cat:*)",
+      "Bash(jar tf:*)",
+      "Bash(jar xf:*)",
+      "Read(//private/tmp/**)",
+      "mcp__idea__get_file_problems",
+      "Bash(mvn dependency:list -q)",
+      "Bash(mvn dependency:list)",
+      "Read(//tmp/redis-ac/META-INF/spring/**)",
+      "Bash(jar xOf ~/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.0.5/spring-boot-data-redis-4.0.5.jar META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports)",
+      "Bash(jar xOf ~/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.0.5/spring-boot-data-redis-4.0.5.jar org/springframework/boot/data/redis/autoconfigure/DataRedisAutoConfiguration.class)"
     ]
   }
 }

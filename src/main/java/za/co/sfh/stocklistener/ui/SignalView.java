@@ -2,8 +2,10 @@ package za.co.sfh.stocklistener.ui;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
@@ -33,10 +35,30 @@ public class SignalView extends VerticalLayout {
         add(new H1("Pending Breakout Signals"));
 
         // Configure the Grid columns
-        grid.setColumns("symbol", "entry", "stop", "target", "confidence", "risk", "notes");
+        grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "risk", "notes");
         grid.addColumn(signal -> FORMATTER.format(Instant.ofEpochMilli(signal.timestamp())))
                 .setHeader("Generated At")
                 .setSortable(true);
+        grid.addColumn(signal -> signal.preMarketHigh() == Double.MIN_VALUE ? "-" : String.format("%.2f", signal.preMarketHigh()))
+                .setHeader("PM High")
+                .setSortable(true);
+        grid.addColumn(signal -> signal.preMarketLow() == Double.MAX_VALUE ? "-" : String.format("%.2f", signal.preMarketLow()))
+                .setHeader("PM Low")
+                .setSortable(true);
+        grid.addComponentColumn(signal -> {
+            Span newsSpan = new Span(signal.news() != null ? signal.news() : "");
+            newsSpan.getStyle().set("white-space", "normal").set("word-break", "break-word");
+            return newsSpan;
+        }).setHeader("News").setAutoWidth(true).setFlexGrow(2);
+
+        grid.addComponentColumn(signal -> {
+            Button remove = new Button("Remove");
+            remove.addClickListener(e -> {
+                signalStore.remove(signal.id());
+                refreshGrid();
+            });
+            return remove;
+        }).setHeader("").setAutoWidth(true).setFlexGrow(0);
 
         grid.setSizeFull();
         add(grid);

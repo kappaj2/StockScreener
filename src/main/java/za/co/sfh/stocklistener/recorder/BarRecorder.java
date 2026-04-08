@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -30,9 +32,10 @@ public class BarRecorder {
     private final BufferedWriter writer;
     private final AtomicLong lineCount = new AtomicLong();
 
-    public BarRecorder(@Value("${recorder.output-file:src/test/resources/fixtures/bars.jsonl}") String outputFile)
+    public BarRecorder(@Value("${recorder.output-dir:src/test/resources/fixtures}") String outputDir)
             throws IOException {
-        Path path = Path.of(outputFile);
+        String date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        Path path = Path.of(outputDir, "bars-" + date + ".jsonl");
         Files.createDirectories(path.getParent());
         this.writer = Files.newBufferedWriter(path,
                 StandardOpenOption.CREATE,

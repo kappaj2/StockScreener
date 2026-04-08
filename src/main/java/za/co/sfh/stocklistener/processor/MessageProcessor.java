@@ -40,7 +40,7 @@ public class MessageProcessor implements MessageHandler {
 
     @Override
     public void handle(JsonNode node) {
-        String ev = node.path("ev").asText(null);
+        var ev = node.path("ev").asString(null);
         if (ev == null) {
             log.warn("Message has no 'ev' field: {}", node);
             return;
@@ -58,7 +58,7 @@ public class MessageProcessor implements MessageHandler {
     public void startProcessing() {
         Thread.ofVirtual().name("message-processor").start(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                String message = queue.poll();
+                var message = queue.poll();
                 if (message != null) {
                     process(message);
                 } else {
@@ -75,7 +75,7 @@ public class MessageProcessor implements MessageHandler {
     private void process(String raw) {
         recorder.ifPresent(r -> r.record(raw));
         try {
-            JsonNode array = objectMapper.readTree(raw);
+            var array = objectMapper.readTree(raw);
             for (JsonNode node : array) {
                 handle(node);
             }

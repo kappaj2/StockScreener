@@ -4,6 +4,10 @@ spring:
   threads:
     virtual:
       enabled: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
   ai:
     ollama:
       base-url: http://localhost:11434
@@ -24,6 +28,14 @@ massive:
 filter:
   min-close: 0.1
   min-volume: 500
+
+patterns:
+  breakout:
+    stop: 0.9
+    target: 1.05
+  invertedV:
+    stop: -1.35
+    target: 2.0
 
 ollama:
   breakout:
