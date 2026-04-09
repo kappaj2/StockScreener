@@ -58,7 +58,9 @@ public class AggregateMinuteBarHandler implements MessageHandler {
 
         var state = stateMap.computeIfAbsent(bar.symbol(),
                 s -> redisStore.load(s).orElseGet(SymbolState::new));
+
         state.addBar(bar);
+
         redisStore.save(state);
         log.debug("Statemap size: {}", stateMap.size());
 

@@ -3,12 +3,16 @@ package za.co.sfh.stocklistener.ui;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
@@ -32,7 +36,49 @@ public class SignalView extends VerticalLayout {
     @PostConstruct
     private void init() {
         setSizeFull();
-        add(new H1("Pending Breakout Signals"));
+        setPadding(false);
+        setSpacing(false);
+        getStyle()
+                .set("background", "#0d1117")
+                .set("min-height", "100vh");
+
+        // Header bar
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setPadding(true);
+        header.setAlignItems(Alignment.CENTER);
+        header.getStyle()
+                .set("background", "#161b22")
+                .set("border-bottom", "1px solid #21262d")
+                .set("padding", "12px 24px");
+
+        Span rocket = new Span("🚀");
+        rocket.getStyle().set("font-size", "1.4rem");
+
+        H1 title = new H1("Breakout Signals");
+        title.getStyle()
+                .set("margin", "0")
+                .set("font-size", "1.2rem")
+                .set("font-weight", "600")
+                .set("color", "#e6edf3")
+                .set("letter-spacing", "0.5px");
+
+        Span liveIndicator = new Span("● LIVE");
+        liveIndicator.getStyle()
+                .set("color", "#3fb950")
+                .set("font-size", "0.75rem")
+                .set("font-weight", "600")
+                .set("margin-left", "auto")
+                .set("letter-spacing", "1px");
+
+        header.add(rocket, title, liveIndicator);
+
+        // Grid container
+        Div gridWrapper = new Div();
+        gridWrapper.setSizeFull();
+        gridWrapper.getStyle()
+                .set("padding", "16px 24px")
+                .set("flex", "1");
 
         // Configure the Grid columns
         grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "risk", "notes");
@@ -52,7 +98,15 @@ public class SignalView extends VerticalLayout {
         }).setHeader("News").setAutoWidth(true).setFlexGrow(2);
 
         grid.addComponentColumn(signal -> {
+            Button chart = new Button("Chart");
+            chart.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+            chart.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("chart/" + signal.symbol())));
+            return chart;
+        }).setHeader("").setAutoWidth(true).setFlexGrow(0);
+
+        grid.addComponentColumn(signal -> {
             Button remove = new Button("Remove");
+            remove.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
             remove.addClickListener(e -> {
                 signalStore.remove(signal.id());
                 refreshGrid();
@@ -61,12 +115,18 @@ public class SignalView extends VerticalLayout {
         }).setHeader("").setAutoWidth(true).setFlexGrow(0);
 
         grid.setSizeFull();
-        add(grid);
+        gridWrapper.add(grid);
+
+        add(header, gridWrapper);
+        setFlexGrow(1, gridWrapper);
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+
+        // Apply Lumo dark theme
+        attachEvent.getUI().getElement().setAttribute("theme", Lumo.DARK);
 
         // Initial load
         refreshGrid();

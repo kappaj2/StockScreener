@@ -6,8 +6,11 @@ import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.ser.std.StdSerializer;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class EpochMsSerializer extends StdSerializer<ZonedDateTime> {
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
 
     public EpochMsSerializer() {
         super(ZonedDateTime.class);
@@ -15,6 +18,6 @@ public class EpochMsSerializer extends StdSerializer<ZonedDateTime> {
 
     @Override
     public void serialize(ZonedDateTime value, JsonGenerator gen, SerializationContext ctxt) throws JacksonException {
-        gen.writeNumber(value.toInstant().toEpochMilli());
+        gen.writeString(value.format(FORMATTER));
     }
 }

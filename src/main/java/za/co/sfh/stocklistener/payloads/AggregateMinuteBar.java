@@ -33,4 +33,73 @@ public record AggregateMinuteBar(
         @JsonDeserialize(using = EpochMsDeserializer.class)
         @JsonProperty("e") ZonedDateTime endTimestampMs     // bar end (ET)
 ) {
+    // ── Structural candle metrics ─────────────────────────────────────────────
+
+    /** Full range of the bar: H - L */
+    @JsonProperty("range")
+    public double range() {
+        return high - low;
+    }
+
+    /** Size of the real body: |C - O| */
+    @JsonProperty("body")
+    public double body() {
+        return Math.abs(close - open);
+    }
+
+    /** Upper wick: H - max(O, C) */
+    @JsonProperty("upperWick")
+    public double upperWick() {
+        return high - Math.max(open, close);
+    }
+
+    /** Lower wick: min(O, C) - L */
+    @JsonProperty("lowerWick")
+    public double lowerWick() {
+        return Math.min(open, close) - low;
+    }
+
+    // ── John Wick classification ──────────────────────────────────────────────
+
+    /**
+     * Classifies this candle as a John Wick pattern (strong wick rejection).
+     *
+     * <p>Thresholds used:
+     * <ul>
+     *   <li>Dominant wick / range  &ge; 0.60</li>
+     *   <li>Body / range           &le; 0.25</li>
+     *   <li>Close position ratio   &le; 0.20  (close near opposite end)</li>
+     * </ul>
+     *
+     * @return {@link JohnWickType#BULLISH} for a long lower wick,
+     *         {@link JohnWickType#BEARISH} for a long upper wick,
+     *         {@link JohnWickType#NONE} otherwise.
+     */
+    @JsonProperty("johnWickType")
+    public JohnWickType johnWickType() {
+        double range = range();
+        if (range <= 0) {
+            return JohnWickType.NONE;
+        }
+
+        double bodyRatio      = body()      / range;
+        double upperWickRatio = upperWick() / range;
+        double lowerWickRatio = lowerWick() / range;
+
+        // Bearish John Wick: dominant upper wick, close near low
+        if (upperWickRatio >= 0.60
+                && bodyRatio <= 0.25
+                && (close - low) / range <= 0.20) {
+            return JohnWickType.BEARISH;
+        }
+
+        // Bullish John Wick: dominant lower wick, close near high
+        if (lowerWickRatio >= 0.60
+                && bodyRatio <= 0.25
+                && (high - close) / range <= 0.20) {
+            return JohnWickType.BULLISH;
+        }
+
+        return JohnWickType.NONE;
+    }
 }

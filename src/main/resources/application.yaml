@@ -1,13 +1,18 @@
 spring:
   application:
     name: stocklistener
+
   threads:
     virtual:
       enabled: true
+
   data:
     redis:
       host: localhost
       port: 6379
+      timeout: 200ms
+      connect-timeout: 200ms
+
   ai:
     ollama:
       base-url: http://localhost:11434
@@ -17,8 +22,12 @@ spring:
           temperature: 0.1   # low = deterministic JSON output
           format: json       # forces model to respond with JSON only
 
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
+
 server:
   port: 8000
+  shutdown: graceful
 
 massive:
   api-key: ${MASSIVE_API_KEY}
@@ -36,6 +45,9 @@ patterns:
   invertedV:
     stop: -1.35
     target: 2.0
+  unsharpen:
+    stop: 0.97
+    target: 1.06
 
 ollama:
   breakout:

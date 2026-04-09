@@ -15,6 +15,6 @@ public class ProcessStatusMessage implements MessageHandler {
 
     @Override
     public void handle(JsonNode message) {
-        log.info("Status — {}: {}", message.path("status").asText(), message.path("message").asText());
+        log.info("Status — {}: {}", message.path("status").asString(), message.path("message").asString());
     }
 }

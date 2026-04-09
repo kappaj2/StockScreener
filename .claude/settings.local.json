@@ -20,7 +20,8 @@
       "Bash(mvn dependency:list)",
       "Read(//tmp/redis-ac/META-INF/spring/**)",
       "Bash(jar xOf ~/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.0.5/spring-boot-data-redis-4.0.5.jar META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports)",
-      "Bash(jar xOf ~/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.0.5/spring-boot-data-redis-4.0.5.jar org/springframework/boot/data/redis/autoconfigure/DataRedisAutoConfiguration.class)"
+      "Bash(jar xOf ~/.m2/repository/org/springframework/boot/spring-boot-data-redis/4.0.5/spring-boot-data-redis-4.0.5.jar org/springframework/boot/data/redis/autoconfigure/DataRedisAutoConfiguration.class)",
+      "mcp__idea__search_symbol"
     ]
   }
 }

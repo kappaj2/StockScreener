@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor;
+package za.co.sfh.stocklistener.processor.ollama;
 
 import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
