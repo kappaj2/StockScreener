@@ -32,6 +32,13 @@ server:
 massive:
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
+  cron:
+    start: "0 0 4 * * MON-FRI"
+    stop: "0 0 20 * * MON-FRI"
+    zone: "America/New_York"
+  window:
+    start: "04:00"
+    stop: "20:00"
 
 # Filter stocks before we show interest. Bar must be at least 2 dollar and volume must be at least 50k
 filter:

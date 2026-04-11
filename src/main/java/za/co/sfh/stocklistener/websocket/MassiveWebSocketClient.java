@@ -11,7 +11,12 @@ import za.co.sfh.stocklistener.processor.MessageProcessor;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Component
@@ -21,6 +26,7 @@ public class MassiveWebSocketClient {
     private static final String WS_URI = "wss://delayed.massive.com/stocks";
 
     private final MessageProcessor messageProcessor;
+    private final AtomicReference<WebSocket> activeWebSocket = new AtomicReference<>();
 
     @Value("${massive.api-key}")
     private String apiKey;
@@ -28,8 +34,42 @@ public class MassiveWebSocketClient {
     @Value("${massive.symbols}")
     private String symbols;
 
+    @Value("${massive.window.start}")
+    private String windowStart;
+
+    @Value("${massive.window.stop}")
+    private String windowStop;
+
+    @Value("${massive.cron.zone}")
+    private String cronZone;
+
     @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        ZonedDateTime nowEt = ZonedDateTime.now(ZoneId.of(cronZone));
+        LocalTime nowTime   = nowEt.toLocalTime();
+        DayOfWeek day       = nowEt.getDayOfWeek();
+        LocalTime start     = LocalTime.parse(windowStart);
+        LocalTime stop      = LocalTime.parse(windowStop);
+
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+            log.info("Today is {} (ET) — no trading session at weekends.", day);
+            return;
+        }
+
+        if (nowTime.isAfter(start) && nowTime.isBefore(stop)) {
+            log.info("ET time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
+            connect();
+        } else {
+            log.info("ET time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
+        }
+    }
+
     public void connect() {
+        if (activeWebSocket.get() != null) {
+            log.info("WebSocket is already connected.");
+            return;
+        }
+
         Thread.ofVirtual().name("massive-ws-client").start(() -> {
             try {
                 HttpClient client = HttpClient.newHttpClient();
@@ -37,6 +77,7 @@ public class MassiveWebSocketClient {
                         .header("Authorization", "Bearer " + apiKey)
                         .buildAsync(URI.create(WS_URI), new StockMessageListener(apiKey, symbols, messageProcessor))
                         .join();
+                activeWebSocket.set(webSocket);
                 log.info("WebSocket connection initiated to {}", WS_URI);
                 // Keep the virtual thread alive while the connection is open
                 synchronized (webSocket) {
@@ -47,8 +88,25 @@ public class MassiveWebSocketClient {
                 log.warn("WebSocket client thread interrupted");
             } catch (Exception e) {
                 log.error("Failed to connect to Massive WebSocket", e);
+            } finally {
+                activeWebSocket.set(null);
             }
         });
+    }
+
+    public void disconnect() {
+        WebSocket webSocket = activeWebSocket.getAndSet(null);
+        if (webSocket != null) {
+            log.info("Disconnecting WebSocket...");
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Scheduled disconnect")
+                    .thenRun(() -> log.info("WebSocket disconnect signal sent."));
+            // The wait() in the virtual thread will be interrupted or return when the connection closes.
+            synchronized (webSocket) {
+                webSocket.notifyAll();
+            }
+        } else {
+            log.info("WebSocket is not connected.");
+        }
     }
 
     private static class StockMessageListener implements WebSocket.Listener {
@@ -93,14 +151,20 @@ public class MassiveWebSocketClient {
         }
 
         @Override
-        public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-            log.info("WebSocket closed — status: {}, reason: {}", statusCode, reason);
-            return null;
+        public void onError(WebSocket webSocket, Throwable error) {
+            log.error("WebSocket error", error);
+            synchronized (webSocket) {
+                webSocket.notifyAll();
+            }
         }
 
         @Override
-        public void onError(WebSocket webSocket, Throwable error) {
-            log.error("WebSocket error", error);
+        public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+            log.info("WebSocket closed — status: {}, reason: {}", statusCode, reason);
+            synchronized (webSocket) {
+                webSocket.notifyAll();
+            }
+            return null;
         }
     }
 }
