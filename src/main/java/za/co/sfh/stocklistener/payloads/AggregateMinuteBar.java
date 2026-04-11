@@ -64,15 +64,17 @@ public record AggregateMinuteBar(
     /**
      * Classifies this candle as a John Wick pattern (strong wick rejection).
      *
-     * <p>Thresholds used:
+     * <p>All four conditions must hold simultaneously:
      * <ul>
-     *   <li>Dominant wick / range  &ge; 0.60</li>
-     *   <li>Body / range           &le; 0.25</li>
-     *   <li>Close position ratio   &le; 0.20  (close near opposite end)</li>
+     *   <li>Dominant wick / range  &ge; 0.60  — wick is the dominant feature</li>
+     *   <li>Body / range           &le; 0.25  — real body is small</li>
+     *   <li>Close position         &le; 0.20  — close is near the opposite end from the wick</li>
+     *   <li>Open position          &le; 0.30  — open is also near the opposite end from the wick,
+     *       ensuring the body itself is not large enough to resemble a Marubozu</li>
      * </ul>
      *
-     * @return {@link JohnWickType#BULLISH} for a long lower wick,
-     *         {@link JohnWickType#BEARISH} for a long upper wick,
+     * @return {@link JohnWickType#BULLISH} for a long lower wick (hammer),
+     *         {@link JohnWickType#BEARISH} for a long upper wick (shooting star),
      *         {@link JohnWickType#NONE} otherwise.
      */
     @JsonProperty("johnWickType")
@@ -86,17 +88,19 @@ public record AggregateMinuteBar(
         double upperWickRatio = upperWick() / range;
         double lowerWickRatio = lowerWick() / range;
 
-        // Bearish John Wick: dominant upper wick, close near low
+        // Bearish John Wick: dominant upper wick, both close and open near the low
         if (upperWickRatio >= 0.60
                 && bodyRatio <= 0.25
-                && (close - low) / range <= 0.20) {
+                && (close - low) / range <= 0.20
+                && (open  - low) / range <= 0.30) {
             return JohnWickType.BEARISH;
         }
 
-        // Bullish John Wick: dominant lower wick, close near high
+        // Bullish John Wick: dominant lower wick, both close and open near the high
         if (lowerWickRatio >= 0.60
                 && bodyRatio <= 0.25
-                && (high - close) / range <= 0.20) {
+                && (high - close) / range <= 0.20
+                && (high - open)  / range <= 0.30) {
             return JohnWickType.BULLISH;
         }
 
