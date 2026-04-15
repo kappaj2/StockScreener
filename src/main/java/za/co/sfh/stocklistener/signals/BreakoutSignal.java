@@ -6,9 +6,9 @@ package za.co.sfh.stocklistener.signals;
  * via GET /api/signals/pending and fires the TradingView alert.
  */
 public record BreakoutSignal(
-        String id,            // UUID — used to idempotency-check duplicate alerts
-        String symbol,        // e.g. "AAPL"
-        String pattern,       // e.g. "BREAKOUT", "INVERTED_VEE"
+        String id,              // UUID — used to idempotency-check duplicate alerts
+        String symbol,          // e.g. "AAPL"
+        PatternType pattern,    // e.g. BREAKOUT, INVERTED_VEE
         double entry,         // suggested entry price
         double stop,          // stop-loss price
         double target,        // price target
