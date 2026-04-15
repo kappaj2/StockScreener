@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 public final class SymbolState {
 
-    private static final int MAX_CANDLES = 20;
+    private static final int MAX_CANDLES = 1440; // 1 day of 1-minute bars (60 min × 24 h)
     private static final ZoneId ET = ZoneId.of("America/New_York");
     private static final LocalTime MARKET_OPEN = LocalTime.of(9, 30);
     private static final LocalTime MARKET_CLOSE = LocalTime.of(16, 0);

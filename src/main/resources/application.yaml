@@ -49,12 +49,29 @@ patterns:
   breakout:
     stop: 0.9
     target: 1.05
+    storeSignal: true
   invertedV:
     stop: -1.35
     target: 2.0
+    storeSignal: false
   unsharpen:
     stop: 0.97
     target: 1.06
+    storeSignal: false
+  strongClimb:
+    movePercentage: 5.0   # minimum % move from lowest-high to highest-high to qualify
+    moveNumBars: 390       # number of bars to scan (390 = one regular trading session)
+    storeSignal: false
+
+ibkr:
+  enabled: true                   # set true once TWS is running on port below
+  host: 127.0.0.1
+  port: 7496                     # live TWS = 7496, paper = 7497, IB Gateway live = 4001
+  client-id: 2                   # must differ from any other connected client
+  symbols:                       # comma-separated symbols to auto-subscribe on connect
+                                 # e.g. "AAPL,TSLA,NVDA"  (leave blank to subscribe via REST)
+  tape:
+    max-ticks: 500               # rolling window depth per symbol
 
 ollama:
   breakout:

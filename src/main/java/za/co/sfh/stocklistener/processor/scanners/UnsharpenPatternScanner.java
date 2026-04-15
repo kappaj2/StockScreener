@@ -8,6 +8,7 @@ import za.co.sfh.stocklistener.payloads.JohnWickType;
 import za.co.sfh.stocklistener.processor.PatternScanner;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
+import za.co.sfh.stocklistener.signals.PatternType;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +35,14 @@ public class UnsharpenPatternScanner implements PatternScanner {
 
     @Value("${patterns.unsharpen.target}")
     private double targetMultiplier;
+
+    @Value("${patterns.unsharpen.storeSignal:false}")
+    private boolean storeSignal;
+
+    @Override
+    public boolean shouldStore() {
+        return storeSignal;
+    }
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
@@ -77,7 +86,7 @@ public class UnsharpenPatternScanner implements PatternScanner {
         return Optional.of(new BreakoutSignal(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
-                "UNSHARPEN",
+                PatternType.UNSHARPEN_MASK,
                 entry,
                 stop,
                 target,

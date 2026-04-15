@@ -7,6 +7,7 @@ import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 import za.co.sfh.stocklistener.processor.PatternScanner;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
+import za.co.sfh.stocklistener.signals.PatternType;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +21,14 @@ public class BreakoutPatternScanner implements PatternScanner {
 
     @Value("${patterns.breakout.target}")
     private double targetMultiplier;
+
+    @Value("${patterns.breakout.storeSignal:false}")
+    private boolean storeSignal;
+
+    @Override
+    public boolean shouldStore() {
+        return storeSignal;
+    }
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
@@ -53,7 +62,7 @@ public class BreakoutPatternScanner implements PatternScanner {
         return Optional.of(new BreakoutSignal(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
-                "BREAKOUT",
+                PatternType.BREAKOUT,
                 bar.close(),
                 bar.close() * stopMultiplier,
                 bar.close() * targetMultiplier,

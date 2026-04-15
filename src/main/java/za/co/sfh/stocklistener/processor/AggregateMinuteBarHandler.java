@@ -51,10 +51,10 @@ public class AggregateMinuteBarHandler implements MessageHandler {
             return;
         }
 
-        //  Only record and screen green bars for long positions.
-        if (bar.high() < bar.low()) {
-            return;
-        }
+//        //  Only record and screen green bars for long positions.
+//        if (bar.high() < bar.low()) {
+//            return;
+//        }
 
         var state = stateMap.computeIfAbsent(bar.symbol(),
                 s -> redisStore.load(s).orElseGet(SymbolState::new));
@@ -68,7 +68,9 @@ public class AggregateMinuteBarHandler implements MessageHandler {
             Optional<BreakoutSignal> signal = scanner.scan(bar, state);
             signal.ifPresent(s -> {
                 log.info("[{}] {} pattern detected — entry={}", s.symbol(), s.pattern(), s.entry());
-                signalStore.add(s);
+                if (scanner.shouldStore()) {
+                    signalStore.add(s);
+                }
             });
         }
     }

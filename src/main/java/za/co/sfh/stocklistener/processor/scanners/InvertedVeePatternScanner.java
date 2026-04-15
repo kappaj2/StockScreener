@@ -26,6 +26,14 @@ public class InvertedVeePatternScanner implements PatternScanner {
     @Value("${patterns.invertedV.target}")
     private double targetMultiplier;
 
+    @Value("${patterns.invertedV.storeSignal:false}")
+    private boolean storeSignal;
+
+    @Override
+    public boolean shouldStore() {
+        return storeSignal;
+    }
+
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
