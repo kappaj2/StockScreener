@@ -216,3 +216,16 @@ src/main/java/za/co/sfh/stocklistener/
 └── websocket/
     └── MassiveWebSocketClient.java    Polygon WebSocket connection
 ```
+
+
+Starting the docker instance:
+
+./mvnw clean package -Pproduction -DskipTests
+
+docker build -t stocklistener:latest .
+
+# To start in recording mode:
+docker compose up recorder -d
+
+# Or to start without recording:
+docker compose up app

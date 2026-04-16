@@ -6,9 +6,14 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
+import za.co.sfh.stocklistener.processor.indicators.LinearRegressionIndicator;
+import za.co.sfh.stocklistener.processor.indicators.MacdIndicator;
+import za.co.sfh.stocklistener.processor.indicators.RocIndicator;
+import za.co.sfh.stocklistener.processor.indicators.RsiIndicator;
+import za.co.sfh.stocklistener.processor.indicators.VolumeProfileIndicator;
 import za.co.sfh.stocklistener.processor.scanners.BreakoutPatternScanner;
 import za.co.sfh.stocklistener.processor.scanners.InvertedVeePatternScanner;
-import za.co.sfh.stocklistener.processor.scanners.PercentageIncreaseForTheDayScanner;
+import za.co.sfh.stocklistener.processor.scanners.MomentumStrengthScanner;
 import za.co.sfh.stocklistener.processor.scanners.UnsharpenPatternScanner;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
@@ -108,12 +113,42 @@ class DailySymbolReplayTest {
         setField(invertedVee, "targetMultiplier", 2.0);
         setField(invertedVee, "storeSignal",      false);
 
-        PercentageIncreaseForTheDayScanner strongClimb = new PercentageIncreaseForTheDayScanner();
-        setField(strongClimb, "movePercentage", 5.0);
-        setField(strongClimb, "moveNumBars",    390);
-        setField(strongClimb, "storeSignal",    true);
+        RsiIndicator rsiInd = new RsiIndicator();
+        setField(rsiInd, "period",              14);
+        setField(rsiInd, "overboughtThreshold", 70.0);
+        setField(rsiInd, "oversoldThreshold",   30.0);
 
-        List<PatternScanner> scanners = List.of(breakout, unsharpen, invertedVee, strongClimb);
+        RocIndicator rocInd = new RocIndicator();
+        setField(rocInd, "period",    10);
+        setField(rocInd, "avgWindow", 10);
+        setField(rocInd, "surgeFactor", 1.5);
+
+        MacdIndicator macdInd = new MacdIndicator();
+        setField(macdInd, "fastPeriod",   12);
+        setField(macdInd, "slowPeriod",   26);
+        setField(macdInd, "signalPeriod",  9);
+
+        LinearRegressionIndicator linRegInd = new LinearRegressionIndicator();
+        setField(linRegInd, "period",         60);
+        setField(linRegInd, "steepThreshold", 0.001);
+        setField(linRegInd, "r2Threshold",    0.70);
+
+        VolumeProfileIndicator volInd = new VolumeProfileIndicator();
+        setField(volInd, "shortPeriod",        60);
+        setField(volInd, "longPeriod",         390);
+        setField(volInd, "surgeThreshold",     1.5);
+        setField(volInd, "convictionThreshold", 2.0);
+
+        MomentumStrengthScanner momentumStrength = new MomentumStrengthScanner(
+                rsiInd, rocInd, macdInd, linRegInd, volInd, null);
+        setField(momentumStrength, "stopMultiplier",       0.97);
+        setField(momentumStrength, "targetMultiplier",     1.06);
+        setField(momentumStrength, "storeSignal",          true);
+        setField(momentumStrength, "highScoreThreshold",   7);
+        setField(momentumStrength, "veryHighScoreThreshold", 10);
+        setField(momentumStrength, "rsiStrongThreshold",   60.0);
+
+        List<PatternScanner> scanners = List.of(breakout, unsharpen, invertedVee, momentumStrength);
 
         // ── State ──────────────────────────────────────────────────────────────
         SymbolState state = new SymbolState();

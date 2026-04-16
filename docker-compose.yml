@@ -1,0 +1,64 @@
+services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Port not exposed to the host — containers communicate on the internal network.
+    # Remove this comment and add "ports: - 6379:6379" if you need host access.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Stocklistener: live recording mode ────────────────────────────────────────
+  # Connects to Polygon.io, records every raw WebSocket message to a dated .jsonl
+  # fixture file on the host. Run with:
+  #   MASSIVE_API_KEY=<key> docker compose up recorder
+  recorder:
+    image: stocklistener:latest
+    build: .
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8085:8000"
+    environment:
+      MASSIVE_API_KEY: ${MASSIVE_API_KEY}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: record
+      RECORDER_OUTPUT_DIR: /fixtures
+      SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      VAADIN_PRODUCTIONMODE: "true"
+    volumes:
+      # Fixture files land directly in the test-resources directory so the IDE
+      # replay test can read them without any copy step.
+      - ./src/test/resources/fixtures:/fixtures
+    extra_hosts:
+      # Allows the container to reach Ollama (and Redis if run externally) on the
+      # host machine. On Linux this is required; Mac/Windows have it built in.
+      - "host.docker.internal:host-gateway"
+
+  # ── Stocklistener: normal (non-recording) mode ───────────────────────────────
+  # Use this profile for production-style runs without fixture capture.
+  #   MASSIVE_API_KEY=<key> docker compose up app
+  app:
+    image: stocklistener:latest
+    build: .
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8085:8000"
+    environment:
+      MASSIVE_API_KEY: ${MASSIVE_API_KEY}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      VAADIN_PRODUCTIONMODE: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

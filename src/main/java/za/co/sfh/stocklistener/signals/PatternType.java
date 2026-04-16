@@ -9,5 +9,7 @@ public enum PatternType {
     BREAKOUT,
     UNSHARPEN_MASK,
     STRONG_CLIMB,
-    INVERTED_VEE
+    INVERTED_VEE,
+    MOMENTUM_VERY_HIGH,
+    MOMENTUM_HIGH
 }

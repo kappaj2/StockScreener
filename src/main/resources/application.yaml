@@ -17,7 +17,7 @@ spring:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: qwen3:8b #qwen3:8b
+        model: gemma4:e4b
         options:
           temperature: 0.1   # low = deterministic JSON output
           format: json       # forces model to respond with JSON only
@@ -58,10 +58,36 @@ patterns:
     stop: 0.97
     target: 1.06
     storeSignal: false
-  strongClimb:
-    movePercentage: 5.0   # minimum % move from lowest-high to highest-high to qualify
-    moveNumBars: 390       # number of bars to scan (390 = one regular trading session)
-    storeSignal: false
+  momentum:
+    stop: 0.97                  # stop-loss multiplier (entry × stop)
+    target: 1.06                # price target multiplier (entry × target)
+    storeSignal: true           # emit confirmed signals to SignalStore
+    high-score: 7               # minimum score for a HIGH_MOMENTUM signal (volume gate still applies)
+    very-high-score: 10         # minimum score for a VERY_HIGH_MOMENTUM signal (volume gate still applies)
+    rsi-strong-threshold: 60.0  # RSI level that awards the "strong momentum" bonus point
+
+indicators:
+  rsi:
+    period: 14              # Wilder's RSI look-back period
+    overbought: 70          # RSI ≥ this → overbought flag
+    oversold: 30            # RSI ≤ this → oversold flag
+  roc:
+    period: 10              # look-back period for ROC calculation
+    avg-window: 10          # rolling window for average-ROC (acceleration detection)
+    surge-factor: 1.5       # current ROC must be ≥ avgROC × this to flag a surge
+  macd:
+    fast: 12                # fast EMA period
+    slow: 26                # slow EMA period
+    signal: 9               # signal-line EMA period
+  linreg:
+    period: 60              # number of bars in the regression window (≈ 1 trading hour)
+    steep-threshold: 0.001  # min normalised slope (slope/meanClose) to classify as steep
+    r2-threshold: 0.70      # min R² alongside positive slope to flag a strong trend
+  volume:
+    short-period: 60        # recent (short) window in bars (≈ 1 hour)
+    long-period: 390        # baseline window in bars (≈ 1 full regular session)
+    surge-threshold: 1.5    # short avg ≥ long avg × this → volume surge
+    conviction-threshold: 2.0  # short avg ≥ long avg × this → strong conviction
 
 ibkr:
   enabled: true                   # set true once TWS is running on port below
