@@ -41,7 +41,6 @@ public class CandleChartView extends VerticalLayout implements BeforeEnterObserv
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        attachEvent.getUI().getElement().setAttribute("theme", Lumo.DARK);
         buildUI();
     }
 

@@ -138,9 +138,6 @@ public class SignalView extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
 
-        // Apply Lumo dark theme
-        attachEvent.getUI().getElement().setAttribute("theme", Lumo.DARK);
-
         // Initial load
         refreshGrid();
 
@@ -162,7 +159,7 @@ public class SignalView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        List<BreakoutSignal> signals = signalStore.peekAll();
+        List<BreakoutSignal> signals = signalStore.peekAll().reversed();
         grid.setItems(signals);
     }
 }

@@ -1,0 +1,14 @@
+/* Enable dark color scheme globally */
+html {
+  color-scheme: dark;
+}
+
+/* Overrides for Lumo dark mode */
+[theme~="dark"] {
+  --lumo-base-color: #0d1117;
+}
+
+/* Base styles for compatibility when the theme attribute is set on html/body */
+:host, html {
+  --lumo-base-color: #0d1117;
+}

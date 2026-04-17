@@ -312,7 +312,6 @@ public class TapeView extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent event) {
         super.onAttach(event);
-        event.getUI().getElement().setAttribute("theme", Lumo.DARK);
     }
 
     @Override
