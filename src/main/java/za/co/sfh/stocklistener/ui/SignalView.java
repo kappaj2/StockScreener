@@ -5,6 +5,7 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
@@ -82,20 +83,28 @@ public class SignalView extends VerticalLayout {
 
         // Configure the Grid columns
         grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "risk", "notes");
+
+        // Make all auto-generated columns resizable and constrain the wide pattern column
+        grid.getColumns().forEach(col -> col.setResizable(true));
+        grid.getColumnByKey("pattern").setWidth("150px").setFlexGrow(0);
+
         grid.addColumn(signal -> FORMATTER.format(Instant.ofEpochMilli(signal.timestamp())))
                 .setHeader("Generated At")
-                .setSortable(true);
+                .setSortable(true)
+                .setResizable(true);
         grid.addColumn(signal -> signal.preMarketHigh() == Double.MIN_VALUE ? "-" : String.format("%.2f", signal.preMarketHigh()))
                 .setHeader("PM High")
-                .setSortable(true);
+                .setSortable(true)
+                .setResizable(true);
         grid.addColumn(signal -> signal.preMarketLow() == Double.MAX_VALUE ? "-" : String.format("%.2f", signal.preMarketLow()))
                 .setHeader("PM Low")
-                .setSortable(true);
+                .setSortable(true)
+                .setResizable(true);
         grid.addComponentColumn(signal -> {
             Span newsSpan = new Span(signal.news() != null ? signal.news() : "");
             newsSpan.getStyle().set("white-space", "normal").set("word-break", "break-word");
             return newsSpan;
-        }).setHeader("News").setAutoWidth(true).setFlexGrow(2);
+        }).setHeader("News").setAutoWidth(true).setFlexGrow(2).setResizable(true);
 
         grid.addComponentColumn(signal -> {
             Button chart = new Button("Chart");
@@ -113,6 +122,10 @@ public class SignalView extends VerticalLayout {
             });
             return remove;
         }).setHeader("").setAutoWidth(true).setFlexGrow(0);
+
+        // Dark theme variants
+        grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_NO_BORDER);
+        grid.getElement().setAttribute("theme", "dark");
 
         grid.setSizeFull();
         gridWrapper.add(grid);

@@ -108,6 +108,20 @@ public class MomentumStrengthScanner implements PatternScanner {
         List<AggregateMinuteBar> candles = state.getCandles();
         if (candles.size() < 20) return Optional.empty();
 
+        // ── Long-only structural price guards ─────────────────────────────────
+        // 1. Current candle must be bullish
+        if (bar.close() <= bar.open()) return Optional.empty();
+
+        // 2. Close must be above the 9-period EMA — below EMA9 means short-term downtrend
+        if (state.getEma9() > 0 && bar.close() <= state.getEma9()) return Optional.empty();
+
+        // 3. Close must be above VWAP — below VWAP signals bearish intraday bias
+        if (state.getVwap() > 0 && bar.close() <= state.getVwap()) return Optional.empty();
+
+        // 4. Price must be higher than it was 3 bars ago — rules out a green bounce inside a drawback
+        AggregateMinuteBar threeBack = candles.get(candles.size() - 4);
+        if (bar.close() <= threeBack.close()) return Optional.empty();
+
         // ── Layer 1: compute all indicators ───────────────────────────────────
         RsiIndicator.RsiResult            rsi    = rsiIndicator.compute(candles);
         RocIndicator.RocResult            roc    = rocIndicator.compute(candles);
@@ -140,6 +154,12 @@ public class MomentumStrengthScanner implements PatternScanner {
                     bar.symbol(), tier.label, score.total, confidence);
             return buildSignal(bar, state, tier, confidence, risk, notes);
         }
+
+        if (tier == MomentumTier.HIGH) {
+            return buildSignal(bar, state, tier, confidence, risk, notes);
+        }
+
+        //  Only ask Ollama if configured for VERY_HIGH tier, to conserve API calls. The extra confidence boost from a VERY_HIGH rating is where we expect Ollama's second opinion to add the most value.
         ollamaStrengthScanner.analyseAsync(
                 bar.symbol(), tier.label, score.total,
                 rsi, roc, macd, linReg, vol
@@ -204,10 +224,14 @@ public class MomentumStrengthScanner implements PatternScanner {
         }
 
         // ── ROC ───────────────────────────────────────────────────────────────
-        if (roc.isValid() && roc.accelerating()) {
+        // roc.accelerating() = roc > avgRoc, which fires even when both values are negative.
+        // Guard with roc > 0 to ensure we only score positive (upward) momentum.
+        if (roc.isValid() && roc.roc() > 0 && roc.accelerating()) {
             total += 1;
             reasons.add("ROC:accelerating(" + String.format("%.1f", roc.roc()) + "%)");
-            if (roc.surge()) {
+            // surge = roc >= avgRoc * surgeFactor; also guard avgRoc > 0 so a negative
+            // rolling average cannot produce a spurious "surge" reading.
+            if (roc.avgRoc() > 0 && roc.surge()) {
                 total += 1;
                 reasons.add("ROC:surge");
             }
