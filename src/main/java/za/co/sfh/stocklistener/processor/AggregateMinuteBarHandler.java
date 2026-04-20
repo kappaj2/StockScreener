@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
+import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
@@ -25,6 +26,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final SignalStore signalStore;
     private final List<PatternScanner> scanners;
     private final SymbolStateRedisStore redisStore;
+    private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
 
     @Value("${filter.min-close}")
@@ -69,6 +71,11 @@ public class AggregateMinuteBarHandler implements MessageHandler {
             signal.ifPresent(s -> {
                 log.info("[{}] {} pattern detected — entry={}", s.symbol(), s.pattern(), s.entry());
                 if (scanner.shouldStore()) {
+                    if (dontDiddleInTheMiddle.isInMiddle(s.entry(), state)) {
+                        log.info("[{}] {} signal suppressed — entry={} is in the middle of yesterday's range",
+                                s.symbol(), s.pattern(), s.entry());
+                        return;
+                    }
                     signalStore.add(s);
                 }
             });

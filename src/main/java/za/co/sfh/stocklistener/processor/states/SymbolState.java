@@ -33,6 +33,12 @@ public final class SymbolState {
     private double preMarketHigh = Double.MIN_VALUE;
     private double preMarketLow  = Double.MAX_VALUE;
 
+    // Previous full session high/low — used by DontDiddleInTheMiddle filter
+    private double prevDayHigh    = 0;
+    private double prevDayLow     = 0;
+    private double currentDayHigh = Double.MIN_VALUE;
+    private double currentDayLow  = Double.MAX_VALUE;
+
     // Session VWAP — reset each trading day
     private double cumulativePV     = 0;
     private double cumulativeVolume = 0;
@@ -62,6 +68,9 @@ public final class SymbolState {
             if (bar.low()  < preMarketLow)  preMarketLow  = bar.low();
         }
 
+        if (bar.high() > currentDayHigh) currentDayHigh = bar.high();
+        if (bar.low()  < currentDayLow)  currentDayLow  = bar.low();
+
         updateVwap(bar);
         updateEma9(bar);
 
@@ -78,7 +87,14 @@ public final class SymbolState {
     private void updateVwap(AggregateMinuteBar bar) {
         LocalDate barDate = bar.startTimestampMs().withZoneSameInstant(ET).toLocalDate();
         if (!barDate.equals(sessionDate)) {
-            // New session — reset accumulators
+            // New session — roll current day range into previous day before resetting
+            if (currentDayHigh != Double.MIN_VALUE && currentDayLow != Double.MAX_VALUE) {
+                prevDayHigh = currentDayHigh;
+                prevDayLow  = currentDayLow;
+                log.debug("[{}] Rolled previous day range: high={} low={}", symbol, prevDayHigh, prevDayLow);
+            }
+            currentDayHigh   = Double.MIN_VALUE;
+            currentDayLow    = Double.MAX_VALUE;
             cumulativePV     = 0;
             cumulativeVolume = 0;
             sessionDate      = barDate;
@@ -132,23 +148,28 @@ public final class SymbolState {
                 preMarketHigh, preMarketLow,
                 cumulativePV, cumulativeVolume, vwap, sessionDate,
                 ema9, totalBars, emaSeedSum,
-                List.copyOf(candles), List.copyOf(vwapHistory)
+                List.copyOf(candles), List.copyOf(vwapHistory),
+                prevDayHigh, prevDayLow, currentDayHigh, currentDayLow
         );
     }
 
     public void restoreFrom(SymbolStateSnapshot s) {
-        symbol          = s.symbol();
-        avgRange        = s.avgRange();
-        avgVolume       = s.avgVolume();
-        preMarketHigh   = s.preMarketHigh();
-        preMarketLow    = s.preMarketLow();
-        cumulativePV    = s.cumulativePV();
+        symbol           = s.symbol();
+        avgRange         = s.avgRange();
+        avgVolume        = s.avgVolume();
+        preMarketHigh    = s.preMarketHigh();
+        preMarketLow     = s.preMarketLow();
+        cumulativePV     = s.cumulativePV();
         cumulativeVolume = s.cumulativeVolume();
-        vwap            = s.vwap();
-        sessionDate     = s.sessionDate();
-        ema9            = s.ema9();
-        totalBars       = s.totalBars();
-        emaSeedSum      = s.emaSeedSum();
+        vwap             = s.vwap();
+        sessionDate      = s.sessionDate();
+        ema9             = s.ema9();
+        totalBars        = s.totalBars();
+        emaSeedSum       = s.emaSeedSum();
+        prevDayHigh      = s.prevDayHigh();
+        prevDayLow       = s.prevDayLow();
+        currentDayHigh   = s.currentDayHigh();
+        currentDayLow    = s.currentDayLow();
         candles.clear();
         candles.addAll(s.candles());
         vwapHistory.clear();

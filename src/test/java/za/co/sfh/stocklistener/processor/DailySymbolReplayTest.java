@@ -46,8 +46,8 @@ import java.util.Optional;
 class DailySymbolReplayTest {
 
     // ── Configuration ──────────────────────────────────────────────────────────
-    private static final String TEST_DATE   = "2026-04-14";   // yyyy-MM-dd
-    private static final String TEST_SYMBOL = "AAPL";
+    private static final String TEST_DATE   = "2026-04-16";   // yyyy-MM-dd
+    private static final String TEST_SYMBOL = "WNW";
 
     // Filters (match application.yaml)
     private static final double MIN_CLOSE  = 0.10;
@@ -79,13 +79,19 @@ class DailySymbolReplayTest {
         List<AggregateMinuteBar> bars = new ArrayList<>();
         List<String> lines = Files.readAllLines(Path.of(resource.toURI()));
         for (String line : lines) {
-            JsonNode array = mapper.readTree(line);
-            for (JsonNode node : array) {
-                if (!"AM".equals(node.path("ev").asString(null))) continue;
-                if (!TEST_SYMBOL.equals(node.path("sym").asString(null))) continue;
-                AggregateMinuteBar bar = mapper.convertValue(node, AggregateMinuteBar.class);
-                if (bar.close() < MIN_CLOSE || bar.volume() < MIN_VOLUME) continue;
-                bars.add(bar);
+            try {
+                JsonNode array = mapper.readTree(line);
+                for (JsonNode node : array) {
+                    if (!"AM".equals(node.path("ev").asString(null))) continue;
+                    if (!TEST_SYMBOL.equals(node.path("sym").asString(null))) continue;
+                    AggregateMinuteBar bar = mapper.convertValue(node, AggregateMinuteBar.class);
+                    if (bar.close() < MIN_CLOSE || bar.volume() < MIN_VOLUME) continue;
+                    bars.add(bar);
+                }
+            } catch (Exception e) {
+                // Some lines in the fixture might be malformed (e.g. status messages appended to data lines)
+                // We skip these to allow the replay to continue with valid data.
+                System.err.println("Skipping malformed JSON line: " + e.getMessage());
             }
         }
 

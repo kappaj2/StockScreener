@@ -61,7 +61,10 @@ class BarReplayTest {
         za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore redisStore =
                 mock(za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore.class);
 
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore);
+        za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle dontDiddleInTheMiddle =
+                mock(za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle.class);
+
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());

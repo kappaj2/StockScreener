@@ -24,5 +24,9 @@ public record SymbolStateSnapshot(
         int totalBars,
         double emaSeedSum,
         List<AggregateMinuteBar> candles,
-        List<Double> vwapHistory
+        List<Double> vwapHistory,
+        double prevDayHigh,
+        double prevDayLow,
+        double currentDayHigh,
+        double currentDayLow
 ) {}

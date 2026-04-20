@@ -96,6 +96,9 @@ public class MomentumStrengthScanner implements PatternScanner {
     @Value("${patterns.momentum.rsi-strong-threshold:60.0}")
     private double rsiStrongThreshold;
 
+    @Value("${patterns.momentum.ollama-enabled:true}")
+    private boolean ollamaEnabled;
+
     // ── PatternScanner contract ───────────────────────────────────────────────
 
     @Override
@@ -155,7 +158,7 @@ public class MomentumStrengthScanner implements PatternScanner {
             return buildSignal(bar, state, tier, confidence, risk, notes);
         }
 
-        if (tier == MomentumTier.HIGH) {
+        if (tier == MomentumTier.HIGH || !ollamaEnabled) {
             return buildSignal(bar, state, tier, confidence, risk, notes);
         }
 

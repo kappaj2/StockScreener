@@ -58,6 +58,8 @@ patterns:
     stop: 0.97
     target: 1.06
     storeSignal: false
+  dont-diddle:
+    percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:
     stop: 0.97                  # stop-loss multiplier (entry × stop)
     target: 1.06                # price target multiplier (entry × target)
@@ -65,6 +67,7 @@ patterns:
     high-score: 7               # minimum score for a HIGH_MOMENTUM signal (volume gate still applies)
     very-high-score: 10         # minimum score for a VERY_HIGH_MOMENTUM signal (volume gate still applies)
     rsi-strong-threshold: 60.0  # RSI level that awards the "strong momentum" bonus point
+    ollama-enabled: false        # set true to re-enable Ollama second-opinion calls
 
 indicators:
   rsi:
