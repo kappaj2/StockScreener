@@ -22,6 +22,7 @@ public class MinuteBarPurgeJob {
     private int batchSize;
 
     @Scheduled(cron = "${cron.purge.minute-bar}", zone = "${massive.cron.zone}")
+    @Transactional
     public void purgeOldBars() {
         Instant cutoff = Instant.now().minus(90, ChronoUnit.DAYS);
         log.info("Purging minute_bar records older than {} in batches of {}", cutoff, batchSize);
@@ -36,7 +37,6 @@ public class MinuteBarPurgeJob {
         log.info("Purged {} minute_bar records older than 3 months", total);
     }
 
-    @Transactional
     public int deleteBatch(Instant cutoff) {
         return minuteBarRepository.deleteBatchByCreatedAtBefore(cutoff, batchSize);
     }
