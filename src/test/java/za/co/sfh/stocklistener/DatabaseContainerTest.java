@@ -16,9 +16,9 @@ public interface DatabaseContainerTest {
 
     @Container
     MariaDBContainer mariaDBContainer = new MariaDBContainer(mariaDBContainerName)
-            .withUsername("idv")
-            .withPassword("idv")
-            .withDatabaseName("identity_verification_service");
+            .withUsername("stock")
+            .withPassword("stock")
+            .withDatabaseName("stock");
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
@@ -27,7 +27,7 @@ public interface DatabaseContainerTest {
         registry.add("spring.datasource.password", mariaDBContainer::getPassword);
         registry.add("spring.flyway.user", mariaDBContainer::getUsername);
         registry.add("spring.flyway.password", mariaDBContainer::getPassword);
-        registry.add("spring.flyway.schemas", () -> "identity_verification_service");
+        registry.add("spring.flyway.schemas", () -> "stock");
         registry.add("spring.flyway.url", mariaDBContainer::getJdbcUrl);
     }
 }
