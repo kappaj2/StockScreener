@@ -3,6 +3,7 @@ package za.co.sfh.stocklistener.persistence.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
 
@@ -19,5 +20,5 @@ public interface MinuteBarRepository extends JpaRepository<MinuteBarEntity, Long
 
     @Modifying
     @Query(value = "DELETE FROM minute_bar WHERE created_at < :cutoff LIMIT :batchSize", nativeQuery = true)
-    int deleteBatchByCreatedAtBefore(Instant cutoff, int batchSize);
+    int deleteBatchByCreatedAtBefore(@Param("cutoff") Instant cutoff, @Param("batchSize") int batchSize);
 }
