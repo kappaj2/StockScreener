@@ -11,7 +11,7 @@ BEGIN
                FROM information_schema.COLUMNS
                WHERE column_name = cname
                  and table_name = tname
-                 and table_schema = 'customer')
+                 and table_schema = DATABASE())
     THEN
         SET @drop_column_if_exists = CONCAT('ALTER TABLE `', tname, '` DROP COLUMN `', cname, '`;');
         PREPARE drop_query FROM @drop_column_if_exists;
