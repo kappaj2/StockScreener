@@ -12,6 +12,24 @@ services:
       timeout: 3s
       retries: 5
 
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MARIADB_DATABASE: stock
+      MARIADB_USER: stock
+      MARIADB_PASSWORD: ${DB_PASSWORD:-stock}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   # ── Stocklistener: live recording mode ────────────────────────────────────────
   # Connects to Polygon.io, records every raw WebSocket message to a dated .jsonl
   # fixture file on the host. Run with:
@@ -23,15 +41,20 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      mariadb:
+        condition: service_healthy
     ports:
       - "8085:8000"
     environment:
       MASSIVE_API_KEY: ${MASSIVE_API_KEY}
+      REDIS_HOST: redis
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      DB_HOST: mariadb
       SPRING_PROFILES_ACTIVE: record
       RECORDER_OUTPUT_DIR: /fixtures
       SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_HOST: host.docker.internal
       VAADIN_PRODUCTIONMODE: "true"
     volumes:
       # Fixture files land directly in the test-resources directory so the IDE
@@ -52,13 +75,21 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      mariadb:
+        condition: service_healthy
     ports:
       - "8085:8000"
     environment:
       MASSIVE_API_KEY: ${MASSIVE_API_KEY}
+      REDIS_HOST: redis
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      DB_HOST: mariadb
       SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_HOST: host.docker.internal
       VAADIN_PRODUCTIONMODE: "true"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+volumes:
+  mariadb_data:

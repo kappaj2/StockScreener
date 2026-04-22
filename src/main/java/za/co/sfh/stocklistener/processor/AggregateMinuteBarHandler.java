@@ -1,5 +1,6 @@
 package za.co.sfh.stocklistener.processor;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
+import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
+import za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository;
 import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
@@ -16,6 +19,9 @@ import za.co.sfh.stocklistener.signals.SignalStore;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -27,7 +33,9 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final List<PatternScanner> scanners;
     private final SymbolStateRedisStore redisStore;
     private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
+    private final MinuteBarRepository minuteBarRepository;
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
+    private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
 
     @Value("${filter.min-close}")
     private double minClose;
@@ -37,6 +45,29 @@ public class AggregateMinuteBarHandler implements MessageHandler {
 
     public Optional<SymbolState> getState(String symbol) {
         return Optional.ofNullable(stateMap.get(symbol));
+    }
+
+    private void persistMinuteBarAsync(AggregateMinuteBar bar) {
+        persistenceExecutor.submit(() -> {
+            try {
+                minuteBarRepository.save(MinuteBarEntity.from(bar));
+            } catch (Exception e) {
+                log.warn("[{}] Failed to persist minute bar", bar.symbol(), e);
+            }
+        });
+    }
+
+    @PreDestroy
+    void shutdownPersistenceExecutor() {
+        persistenceExecutor.shutdown();
+        try {
+            if (!persistenceExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                persistenceExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            persistenceExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
@@ -57,6 +88,8 @@ public class AggregateMinuteBarHandler implements MessageHandler {
         if (bar.high() < bar.low()) {
             return;
         }
+
+        persistMinuteBarAsync(bar);
 
         var state = stateMap.computeIfAbsent(bar.symbol(),
                 s -> redisStore.load(s).orElseGet(SymbolState::new));
