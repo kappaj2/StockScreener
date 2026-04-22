@@ -22,4 +22,4 @@ begin
     END IF;
 end;;
 
-delimiter ';'
+DELIMITER ;
