@@ -8,14 +8,61 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: ${REDIS_HOST:localhost}
       port: 6379
       timeout: 200ms
       connect-timeout: 200ms
 
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:localhost}:3306/stock
+    username: stock
+    password: stock
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: stock
+        connection:
+          provider_disable_autocommit: true
+        jdbc:
+          batch_size: 5
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        envers:
+          audit_strategy: org.hibernate.envers.strategy.internal.ValidityAuditStrategy
+          strategy: org.hibernate.envers.strategy.internal.ValidityAuditStrategy
+        query:
+          plan_cache_max_size: 8192
+          in_clause_parameter_padding: true
+          fail_on_pagination_over_collection_fetch: true
+        format_sql: false
+        generate_statistics: false
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: "400"
+  flyway:
+    enabled: true
+    password: stock
+    user: stock
+    schemas: stock
+    url: jdbc:mariadb://${DB_HOST:localhost}:3306/stock?useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+    driver-class-name: org.mariadb.jdbc.Driver
+    locations:
+      - classpath:db/migration/schema
+      - classpath:db/migration/procedures
+    postgresql:
+      transactional-lock: false # not relevant for mariadb but good practice if switching
+    mysql:
+      jdbc-properties:
+        useAffectedRows: true
+
   ai:
     ollama:
-      base-url: http://localhost:11434
+      base-url: http://${OLLAMA_HOST:localhost}:11434
       chat:
         model: gemma4:e4b
         options:
@@ -28,6 +75,10 @@ spring:
 server:
   port: 8000
   shutdown: graceful
+
+cron:
+  purge:
+    minute-bar: "0 0 2 * * *"
 
 massive:
   api-key: ${MASSIVE_API_KEY}

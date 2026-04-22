@@ -2,6 +2,14 @@
 
 A Spring Boot 4 application that listens to the [Polygon.io](https://polygon.io) real-time WebSocket feed, filters and analyses pre-market equity bars using a local Ollama LLM, and surfaces confirmed breakout signals as TradingView alerts.
 
+### Database Setup
+```mysql
+CREATE DATABASE stock;
+
+CREATE USER 'stock'@'%' IDENTIFIED BY 'stock';
+GRANT ALL PRIVILEGES ON stock . * TO 'stock'@'%';
+flush privileges;
+
 ---
 
 ## Architecture

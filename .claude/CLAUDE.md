@@ -1,17 +1,18 @@
-# CLAUDE.md — Stock Listener Project Guide
+# CLAUDE.md
 
-This file guides Claude's development assistance for the **Stock Listener** Spring Boot application. Read this before making any changes.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
 ## Project Overview
 
-The Stock Listener is a real-time pre-market breakout scanner that:
-1. Connects to the **Polygon.io WebSocket API** to receive live 1-minute aggregate bars (AM events) for all symbols
-2. Maintains per-symbol rolling state (candles, EMA, VWAP, pre-market high/low) in memory and **Redis**
-3. Runs pluggable **PatternScanner** implementations on every incoming bar to detect trade setups
-4. Confirms breakout candidates asynchronously via a **local Ollama LLM** (qwen3:8b)
-5. Queues confirmed signals in memory and exposes them via a **REST API** for downstream TradingView alert delivery
+Real-time pre-market breakout scanner that:
+1. Connects to the **Polygon.io WebSocket API** for live 1-minute aggregate bars (AM events)
+2. Connects to **IBKR TWS API** for real-time Level II tape reading
+3. Maintains per-symbol rolling state (candles, EMA, VWAP, indicators) in memory and **Redis**
+4. Runs pluggable **PatternScanner** implementations on every incoming bar
+5. Optionally confirms candidates via **local Ollama LLM** (gemma4:e4b)
+6. Queues confirmed signals in memory, exposes via REST for downstream TradingView alert delivery
 
 ---
 
@@ -21,100 +22,58 @@ The Stock Listener is a real-time pre-market breakout scanner that:
 |---|---|
 | Language | Java 25 |
 | Framework | Spring Boot 4.0.5 |
-| State persistence | Redis (JSON blobs via StringRedisTemplate) |
-| In-memory queue | ConcurrentHashMap / ConcurrentLinkedQueue |
-| LLM integration | Spring AI + Ollama (qwen3:8b) |
+| State persistence | Redis (JSON blobs via `StringRedisTemplate`) |
+| LLM integration | Spring AI + Ollama (gemma4:e4b) |
 | WebSocket client | Spring WebSocket (`StandardWebSocketClient`) |
+| IBKR integration | IBKR TWS API 10.30 (protobuf 4.x) |
 | HTTP server | Spring MVC (port 8000) |
 | UI | Vaadin 25 |
-| JSON | Jackson 3.x (tools.jackson + fasterxml annotations) |
-| Code generation | Lombok |
+| JSON | Jackson 3.x (`tools.jackson` + fasterxml annotations) |
 | Build | Maven |
 | Containerisation | Docker (Azul Zulu OpenJDK 25 Alpine) |
-| Testing | JUnit 5 + Spring Boot Test |
 
 ---
 
-## Package Structure
+## Common Commands
 
-```
-za.co.sfh.stocklistener
-├── StocklistenerApplication.java        # Entry point (@SpringBootApplication, @EnableScheduling)
-├── config/
-│   ├── AsyncConfig.java                 # Virtual-thread executor for @Async
-│   └── JacksonConfig.java               # ObjectMapper customisation
-├── payloads/
-│   ├── AggregateMinuteBar.java          # Polygon AM event record (with range/body/wick helpers)
-│   ├── BreakoutAnalysis.java            # LLM response record
-│   ├── EpochMsDeserializer.java         # Jackson: epoch-ms → ZonedDateTime
-│   ├── EpochMsSerializer.java           # Jackson: ZonedDateTime → epoch-ms
-│   ├── JohnWickType.java                # Enum: NONE / BULLISH / BEARISH candle classification
-│   └── StatusMessage.java               # Polygon connection/auth status event
-├── processor/
-│   ├── MessageHandler.java              # Interface: handle(JsonNode node)
-│   ├── MessageProcessor.java            # Dispatcher: queue → virtual thread → handlers by ev type
-│   ├── AggregateMinuteBarHandler.java   # Processes AM events, updates SymbolState, runs scanners
-│   ├── ProcessStatusMessage.java        # Handles connection/auth status events
-│   ├── PatternScanner.java              # Interface: Optional<BreakoutSignal> scan(bar, state)
-│   ├── ollama/
-│   │   └── OllamaBreakoutAnalyser.java  # Async LLM confirmation via Spring AI ChatClient
-│   ├── scanners/
-│   │   ├── BreakoutPatternScanner.java  # 2-candle breakout (primary, active)
-│   │   ├── InvertedVeePatternScanner.java  # TODO: not yet implemented
-│   │   └── UnsharpenPatternScanner.java # John Wick pattern (implemented, signal disabled)
-│   └── states/
-│       ├── SymbolState.java             # Per-symbol rolling window: candles, EMA9, VWAP, averages
-│       ├── SymbolStateRedisStore.java   # Persist/rehydrate SymbolState as JSON in Redis
-│       └── SymbolStateSnapshot.java     # Serialisable DTO for Redis storage
-├── recorder/
-│   └── BarRecorder.java                 # Debug utility: records raw WebSocket messages to file
-├── signals/
-│   ├── BreakoutSignal.java              # Signal record: id, symbol, pattern, entry/stop/target, ...
-│   ├── SignalStore.java                 # In-memory ConcurrentHashMap of pending signals
-│   ├── SignalController.java            # REST: GET /api/signals, DELETE ack, PUT news, GET state
-│   └── BarController.java              # REST: GET /api/bars/{symbol}
-├── ui/
-│   ├── CandleChartView.java             # Vaadin candlestick chart view
-│   └── SignalView.java                  # Vaadin signal list view
-└── websocket/
-    └── MassiveWebSocketClient.java      # Polygon.io WebSocket client (auth, subscribe, reconnect)
+```bash
+# Run all tests
+./mvnw test
+
+# Run a single test class
+./mvnw test -Dtest=BreakoutPatternScannerTest
+
+# Build (skip tests)
+./mvnw clean package -DskipTests
+
+# Run locally (Redis + Ollama must be running)
+MASSIVE_API_KEY=your_key ./mvnw spring-boot:run
+
+# Build for production (compiles Vaadin frontend)
+./mvnw clean package -Pproduction
+
+# Start dependencies only
+docker compose up redis -d
+
+# Run full stack (app + redis)
+MASSIVE_API_KEY=your_key docker compose up app
+
+# Run in recording mode (saves raw WebSocket messages to src/test/resources/fixtures/)
+MASSIVE_API_KEY=your_key docker compose up recorder
+
+# Start Ollama model
+ollama serve && ollama pull gemma4:e4b
+
+# News enricher (polls /api/signals/pending and enriches with NewsAPI headlines)
+NEWSAPI_KEY=your_key python3 scripts/news_enricher.py          # daemon mode
+NEWSAPI_KEY=your_key python3 scripts/news_enricher.py --once   # single pass
 ```
 
 ---
 
-## Domain Model
+## Architecture
 
-### Core Records / DTOs
-
-**`AggregateMinuteBar`** — Polygon AM WebSocket event
-- Fields: `symbol`, `volume`, `open`, `close`, `high`, `low`, `vwap`, `startTime`, `endTime`
-- Computed: `range()`, `body()`, `upperWick()`, `lowerWick()`, `johnWickType()`
-- Epoch-ms timestamps deserialised via `EpochMsDeserializer`
-
-**`BreakoutSignal`** — Queued trade setup
-- Fields: `id` (UUID), `symbol`, `pattern`, `entry`, `stop`, `target`, `confidence`, `risk`, `notes`, `timestamp`, `preMarketHigh`, `preMarketLow`, `news`
-- Held in `SignalStore` until TradingView alerts are acknowledged via `DELETE /api/signals/ack`
-
-**`BreakoutAnalysis`** — LLM response from Ollama
-- Fields: `confirmed` (bool), `confidence` (0–100), `entry`, `stop`, `target`, `risk`, `notes`
-
-**`SymbolState`** — Live per-symbol rolling state
-- Rolling 20-bar candle window (FIFO)
-- Pre-market high/low (04:00–09:29 ET)
-- Session VWAP (reset daily)
-- 9-period EMA of closes (seeded with SMA of first 9)
-- `avgRange` and `avgVolume` (10-bar rolling averages)
-- Persisted to/from Redis via `SymbolStateRedisStore` after every bar
-
-### Key Invariants
-- One `SymbolState` per ticker, stored in a `ConcurrentHashMap` in `AggregateMinuteBarHandler`
-- Bars below `filter.min-close` ($0.10) or `filter.min-volume` (500) are silently dropped
-- Ollama analysis fires **asynchronously** — never block the message processing queue
-- A signal is only emitted when Ollama returns `confirmed = true` AND `confidence ≥ ollama.breakout.min-confidence` (default 70)
-
----
-
-## Message Processing Pipeline
+### Message Processing Pipeline
 
 ```
 Polygon WebSocket (virtual thread)
@@ -124,15 +83,19 @@ Polygon WebSocket (virtual thread)
                     ├─→ "AM"  → AggregateMinuteBarHandler
                     │           ├─→ filter (price, volume)
                     │           ├─→ SymbolState.addBar()
+                    │           ├─→ DontDiddleInTheMiddle.isInMiddle()  # signal gate
                     │           ├─→ PatternScanner.scan() × N
                     │           └─→ OllamaBreakoutAnalyser.analyseAsync()  (if candidate)
                     │                   └─→ SignalStore.add()  (if confirmed + confident)
                     └─→ "status" → ProcessStatusMessage
+
+IBKR TWS (EJavaSignal thread, separate from Polygon)
+  └─→ IbkrTapeClient (EWrapperDelegate inner class)
+        └─→ IbkrTickStore (rolling buffer per symbol, max 500 ticks)
+              └─→ /api/tape/* endpoints
 ```
 
----
-
-## Pattern Scanner Architecture
+### Pattern Scanner Architecture
 
 All scanners implement `PatternScanner`:
 
@@ -142,20 +105,53 @@ public interface PatternScanner {
 }
 ```
 
-All beans are auto-collected as `List<PatternScanner>` in `AggregateMinuteBarHandler` via Spring injection.
-
-**Adding a new pattern:**
-1. Create a new class in `processor/scanners/` implementing `PatternScanner`
-2. Annotate with `@Component` — it will be picked up automatically
-3. Inject any threshold values via `@Value` from `application.yaml` under a new `patterns.*` key
-4. Return `Optional.empty()` if the pattern does not match; return a populated `Optional<BreakoutSignal>` if it does
+Beans are auto-collected as `List<PatternScanner>` in `AggregateMinuteBarHandler` via Spring injection.
 
 **Active scanners:**
+
 | Scanner | Status | Logic |
 |---|---|---|
-| `BreakoutPatternScanner` | Active | Previous bar green + current bar green with range > 2× avg and volume > 2× avg |
-| `InvertedVeePatternScanner` | TODO stub | Returns `Optional.empty()` — not implemented |
-| `UnsharpenPatternScanner` | Implemented, disabled | Bearish → Bullish John Wick → current green above John Wick high (signal emission off) |
+| `BreakoutPatternScanner` | Active | Previous + current bar both green, range > 2× avg, volume > 2× avg |
+| `MomentumStrengthScanner` | Active | Multi-indicator scoring: LinReg + RSI + ROC + MACD + Volume; emits HIGH or VERY_HIGH signal |
+| `UnsharpenPatternScanner` | Implemented, signal disabled (`storeSignal: false`) | Bearish → Bullish John Wick → current green above John Wick high |
+| `InvertedVeePatternScanner` | TODO stub | Always returns `Optional.empty()` |
+
+**`DontDiddleInTheMiddle`** is not a `PatternScanner` — it's a `@Component` gate called by `AggregateMinuteBarHandler` that suppresses signals whose entry price falls in the middle `patterns.dont-diddle.percentage`% of yesterday's range.
+
+**Adding a new pattern:**
+1. Create a class in `processor/scanners/` implementing `PatternScanner`, annotate `@Component`
+2. Add threshold values in `application.yaml` under `patterns.*`, inject via `@Value`
+3. Return `Optional.empty()` on no-match; populated `Optional<BreakoutSignal>` on match
+4. Add a constant to `PatternType` enum in `signals/PatternType.java`
+
+### Technical Indicators (`processor/indicators/`)
+
+Each indicator is a Spring `@Component` with configurable parameters under `indicators.*`:
+
+| Indicator | Config prefix | Purpose |
+|---|---|---|
+| `RsiIndicator` | `indicators.rsi` | Wilder's RSI (period 14) |
+| `RocIndicator` | `indicators.roc` | Rate of Change with acceleration detection |
+| `MacdIndicator` | `indicators.macd` | MACD histogram + crossover detection |
+| `LinearRegressionIndicator` | `indicators.linreg` | Slope + R² trend strength over 60 bars |
+| `VolumeProfileIndicator` | `indicators.volume` | Short vs long window volume surge detection |
+
+All five are injected into `MomentumStrengthScanner`. Do not hold indicator state per-symbol inside these classes — read from `SymbolState`.
+
+### IBKR Integration (`ibkr/`)
+
+- `IbkrTapeClient` — Spring `@Component` that connects to TWS on `ApplicationReadyEvent`. Uses an inner `EWrapperDelegate` class rather than extending `DefaultEWrapper` directly (required because Spring CGLIB proxying cannot subclass third-party types under Java 25 modules).
+- `IbkrTickStore` — rolling tick buffer (`ConcurrentHashMap<String, Deque<IbkrTickEvent>>`), configurable max depth (`ibkr.tape.max-ticks`, default 500).
+- `IbkrTapeController` — REST API at `/api/tape/*`.
+- Enable with `ibkr.enabled=true`; TWS live port = 7496, paper = 7497, IB Gateway = 4001.
+
+### Ollama LLM Integration
+
+Two separate Ollama callers:
+- `OllamaBreakoutAnalyser` — used by `BreakoutPatternScanner`; always `@Async`
+- `OllamaStrengthScanner` — used by `MomentumStrengthScanner`; gated by `patterns.momentum.ollama-enabled` (default `false`)
+
+Both parse responses into structured records (`BreakoutAnalysis`). Temperature 0.1, format JSON.
 
 ---
 
@@ -165,142 +161,77 @@ Base path: `/api`
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/signals/pending` | Returns all queued `BreakoutSignal` objects (non-destructive) |
-| DELETE | `/signals/ack` | Clears the signal queue (call after TradingView alerts are fired) |
-| PUT | `/signals/{id}/news` | Attaches a news headline string to an existing signal |
-| GET | `/signals/state/{symbol}` | Returns `SymbolState` for the given ticker, or 404 |
-| GET | `/bars/{symbol}` | Returns last N 1-minute bars for the given symbol |
+| GET | `/signals/pending` | All queued `BreakoutSignal` objects |
+| DELETE | `/signals/ack` | Clear signal queue |
+| PUT | `/signals/{id}/news` | Attach news headline to signal |
+| GET | `/signals/state/{symbol}` | `SymbolState` for ticker, or 404 |
+| GET | `/bars/{symbol}` | Last N 1-minute bars |
+| GET | `/tape/{symbol}` | Rolling tick buffer for symbol |
+| POST | `/tape/subscribe/{symbol}` | Start IBKR streaming for symbol |
+| DELETE | `/tape/subscribe/{symbol}` | Stop streaming and clear buffer |
+| GET | `/tape/symbols` | All subscribed IBKR symbols |
+| GET | `/tape/status` | IBKR connection status |
 
 ---
 
 ## Configuration (`application.yaml`)
 
-All secrets are injected via environment variables — **never hardcode them**.
+Secrets are injected via environment variables — never hardcode them.
 
-| Key | Purpose |
-|---|---|
-| `massive.api-key` | Polygon.io API key (`MASSIVE_API_KEY` env var) |
-| `massive.symbols` | Polygon subscription pattern (e.g. `AM.*`) |
-| `massive.cron.start / .stop` | Cron schedule for WebSocket connect/disconnect |
-| `massive.window.start / .stop` | Time window for active message processing |
-| `filter.min-close` | Minimum bar close price (default $0.10) |
-| `filter.min-volume` | Minimum bar volume (default 500 shares) |
-| `patterns.breakout.stop` | Stop-loss multiplier (default 0.90) |
-| `patterns.breakout.target` | Target multiplier (default 1.05) |
-| `ollama.breakout.min-confidence` | Minimum Ollama confidence to emit a signal (default 70) |
-| `spring.data.redis.host` | Redis host (default localhost) |
-| `spring.ai.ollama.base-url` | Ollama server URL (default http://localhost:11434) |
-| `spring.ai.ollama.chat.model` | Ollama model name (default qwen3:8b) |
-| `server.port` | HTTP server port (default 8000) |
+| Key | Default | Purpose |
+|---|---|---|
+| `massive.api-key` | `${MASSIVE_API_KEY}` | Polygon.io API key |
+| `massive.symbols` | `AM.*` | Polygon subscription pattern |
+| `massive.cron.start/stop` | `04:00/20:00` ET | WebSocket connect/disconnect schedule |
+| `filter.min-close` | `0.1` | Minimum bar close price |
+| `filter.min-volume` | `500` | Minimum bar volume |
+| `patterns.breakout.stop/target` | `0.9/1.05` | Stop/target multipliers |
+| `patterns.breakout.storeSignal` | `true` | Emit to SignalStore |
+| `patterns.dont-diddle.percentage` | `30` | Middle % of prev day range to suppress |
+| `patterns.momentum.stop/target` | `0.97/1.06` | Momentum stop/target multipliers |
+| `patterns.momentum.high-score` | `7` | Minimum score for HIGH signal |
+| `patterns.momentum.very-high-score` | `10` | Minimum score for VERY_HIGH signal |
+| `patterns.momentum.ollama-enabled` | `false` | Enable Ollama second opinion for momentum |
+| `indicators.rsi.period` | `14` | RSI look-back |
+| `indicators.macd.fast/slow/signal` | `12/26/9` | MACD periods |
+| `indicators.linreg.period` | `60` | Linear regression window (bars) |
+| `indicators.volume.surge-threshold` | `1.5` | Short/long ratio for volume surge |
+| `ollama.breakout.min-confidence` | `70` | Minimum confidence to emit a signal |
+| `ibkr.enabled` | `false` | Enable IBKR TWS connection |
+| `ibkr.port` | `7496` | TWS port (7497 = paper, 4001 = IB Gateway) |
+| `spring.ai.ollama.chat.model` | `gemma4:e4b` | Ollama model |
+| `server.port` | `8000` | HTTP port |
 
 ---
 
 ## Coding Conventions
 
-### General
-- Use **Lombok** (`@Slf4j`, `@RequiredArgsConstructor`, `@Value`, `@Builder`) to reduce boilerplate
-- Use **Java records** for immutable DTOs and payloads
-- Use **virtual threads** for all I/O — do not create dedicated `Thread` objects; rely on `spring.threads.virtual.enabled=true` and `@Async`
-- Prefer `ConcurrentHashMap` and `ConcurrentLinkedQueue` over explicit synchronisation
-
-### State Management
-- All per-symbol state lives in `SymbolState`; never hold state in individual scanners
-- After every `addBar()` call, `SymbolStateRedisStore.save()` is invoked — keep this path fast (fire-and-forget virtual thread is acceptable)
-- `SymbolStateSnapshot` is the only class that crosses the Redis boundary; keep it serialisable (no complex types)
-
-### Async / Threading
-- LLM calls (`OllamaBreakoutAnalyser`) must always be `@Async` — never call them synchronously from the message processing loop
-- The `AsyncConfig` executor uses virtual threads; do not add a custom pool unless there is a specific reason
-
-### Error Handling
-- Log and swallow exceptions in the message processing loop to avoid dropping subsequent messages
-- WebSocket reconnection is handled by `MassiveWebSocketClient`; do not add reconnect logic elsewhere
-- Redis failures should be caught and logged; the app must continue processing even if Redis is unavailable
-
-### Controllers
-- Thin controllers; delegate all logic to `SignalStore` / `SymbolState` directly or via a service
-- Use `ResponseEntity<>` for endpoints that may return 404 (e.g. `GET /signals/state/{symbol}`)
-
----
-
-## External Integrations
-
-### Polygon.io WebSocket (`MassiveWebSocketClient`)
-- Endpoint: `wss://delayed.massive.com/stocks`
-- Auth: Bearer token via `MASSIVE_API_KEY` environment variable
-- Connects at `massive.cron.start` (default 10:00 ET), disconnects at `massive.cron.stop` (default 22:00 ET)
-- Subscription pattern: `massive.symbols` (default `AM.*` = all 1-minute aggregate bars)
-
-### Ollama Local LLM (`OllamaBreakoutAnalyser`)
-- Model: `qwen3:8b` (configurable via `spring.ai.ollama.chat.model`)
-- Temperature: 0.1, format: json — to get deterministic structured output
-- Prompt: last 20 bars as JSON array + pattern criteria
-- Response parsed into `BreakoutAnalysis` record
-
-### Redis (`SymbolStateRedisStore`)
-- Key format: `sym:{symbol}` (e.g. `sym:AAPL`)
-- Value: JSON serialisation of `SymbolStateSnapshot`
-- On app startup, existing keys are rehydrated to resume state without replaying bar history
-- Timeout: 200ms connect + read (non-blocking, failures are tolerated)
-
-### TradingView (external scheduled Cowork task)
-- Polls `GET /api/signals/pending` every 5 minutes (weekdays 04:00–09:59 ET)
-- For each signal: switches TradingView chart symbol, creates an alert, takes a screenshot
-- Calls `DELETE /api/signals/ack` to clear the queue after processing
+- Use **Lombok** (`@Slf4j`, `@RequiredArgsConstructor`, `@Value`, `@Builder`) and **Java records** for DTOs
+- Use **virtual threads** for all I/O — rely on `spring.threads.virtual.enabled=true` and `@Async`; no manual thread creation
+- All per-symbol state lives in `SymbolState`; scanners and indicators must never hold per-symbol state themselves
+- `SymbolStateSnapshot` is the only class that crosses the Redis boundary — keep it serialisable (no complex types)
+- LLM calls must always be `@Async` — never call them synchronously from the message processing loop
+- Log and swallow exceptions in the message processing loop to prevent dropping subsequent messages
+- Redis failures must be caught and logged; the app continues without Redis
 
 ---
 
 ## Testing
 
-### Current State
-- Only a single context-load smoke test exists (`StocklistenerApplicationTests`)
-- No integration or unit tests for pattern scanners, state management, or REST endpoints yet
+Only a single context-load smoke test exists (`StocklistenerApplicationTests`). No unit tests for scanners/indicators yet.
 
-### Writing Tests
-- Unit tests for `PatternScanner` implementations: inject a mock `SymbolState` with controlled bar history; assert `Optional` result
-- Integration tests for REST endpoints: use `@SpringBootTest` + `MockMvc`; mock `SignalStore` and `SymbolStateRedisStore`
-- Redis integration tests: use Testcontainers (`GenericContainer` for Redis) if live Redis behaviour needs verification
-- Do **not** call the real Polygon WebSocket or Ollama in tests — mock `MassiveWebSocketClient` and `OllamaBreakoutAnalyser`
-
----
-
-## Running Locally
-
-```bash
-# Start Redis
-docker run -d -p 6379:6379 redis:7-alpine
-
-# Start Ollama with the required model
-ollama serve
-ollama pull qwen3:8b
-
-# Run the application
-MASSIVE_API_KEY=your_polygon_key \
-./mvnw spring-boot:run
-
-# Run tests
-./mvnw test
-
-# Build Docker image
-./mvnw clean package -DskipTests
-docker build -t stocklistener:latest .
-
-# Run Docker container
-docker run -p 8000:8000 \
-  -e MASSIVE_API_KEY=your_polygon_key \
-  -e SPRING_DATA_REDIS_HOST=host.docker.internal \
-  stocklistener:latest
-```
+- Scanner unit tests: construct a `SymbolState` with controlled bar history; assert `Optional` result
+- REST endpoint tests: `@SpringBootTest` + `MockMvc`; mock `SignalStore`, `SymbolStateRedisStore`, `IbkrTapeClient`
+- Do **not** call the real Polygon WebSocket, Ollama, or IBKR TWS in tests
 
 ---
 
 ## Known Limitations / Future Work
 
-- `InvertedVeePatternScanner` is a stub — always returns `Optional.empty()`; needs implementation
-- `UnsharpenPatternScanner` pattern logic is complete but **signal emission is disabled** — enable once pattern is validated
-- `BarRecorder` is a debug utility; recording is off by default — enable in `MessageProcessor` when raw message capture is needed
-- No authentication on the REST API — add Spring Security if the service is ever exposed beyond localhost
-- `SignalStore` is in-memory only — signals are lost on restart; consider persisting to Redis alongside `SymbolState` if durability is needed
-- No `@ControllerAdvice` / global error handler — add one when standardised HTTP error responses become important
-- Vaadin UI views (`CandleChartView`, `SignalView`) exist but may not be fully wired — verify before relying on them
-- No docker-compose file for local dependency orchestration (Redis + Ollama) — consider adding one for convenience
+- `InvertedVeePatternScanner` — stub, always returns `Optional.empty()`
+- `UnsharpenPatternScanner` — logic complete but `storeSignal: false`; enable once validated
+- `SignalStore` is in-memory only — signals lost on restart
+- No `@ControllerAdvice` global error handler
+- No REST API authentication
+- `BarRecorder` is off by default — enable in `MessageProcessor` for raw message capture
+- Vaadin UI views (`CandleChartView`, `SignalView`) exist but may not be fully wired

@@ -158,6 +158,8 @@ public class MomentumStrengthScanner implements PatternScanner {
             return buildSignal(bar, state, tier, confidence, risk, notes);
         }
 
+        return buildSignal(bar, state, tier, confidence, risk, notes);
+        /*
         if (tier == MomentumTier.HIGH || !ollamaEnabled) {
             return buildSignal(bar, state, tier, confidence, risk, notes);
         }
@@ -173,6 +175,8 @@ public class MomentumStrengthScanner implements PatternScanner {
         );
 
         return buildSignal(bar, state, tier, confidence, risk, notes);
+
+         */
     }
 
     private Optional<BreakoutSignal> buildSignal(AggregateMinuteBar bar, SymbolState state,

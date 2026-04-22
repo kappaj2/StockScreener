@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
+import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
+import za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository;
 import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
@@ -27,6 +29,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final List<PatternScanner> scanners;
     private final SymbolStateRedisStore redisStore;
     private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
+    private final MinuteBarRepository minuteBarRepository;
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
 
     @Value("${filter.min-close}")
@@ -56,6 +59,12 @@ public class AggregateMinuteBarHandler implements MessageHandler {
         //  Only record and screen green bars for long positions.
         if (bar.high() < bar.low()) {
             return;
+        }
+
+        try {
+            minuteBarRepository.save(MinuteBarEntity.from(bar));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to persist minute bar: {}", bar.symbol(), e.getMessage());
         }
 
         var state = stateMap.computeIfAbsent(bar.symbol(),

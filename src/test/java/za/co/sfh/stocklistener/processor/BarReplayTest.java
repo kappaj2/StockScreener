@@ -64,7 +64,10 @@ class BarReplayTest {
         za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle dontDiddleInTheMiddle =
                 mock(za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle.class);
 
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle);
+        za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository minuteBarRepository =
+                mock(za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository.class);
+
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle, minuteBarRepository);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());
