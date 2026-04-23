@@ -33,6 +33,9 @@ public class MassiveWebSocketClient {
     private final AtomicBoolean intentionalDisconnect = new AtomicBoolean(false);
     private final AtomicInteger retryCount = new AtomicInteger(0);
 
+    @Value("${massive.enabled:true}")
+    private boolean enabled;
+
     @Value("${massive.api-key}")
     private String apiKey;
 
@@ -60,6 +63,10 @@ public class MassiveWebSocketClient {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
+        if (!enabled) {
+            log.info("Massive WebSocket disabled via massive.enabled=false — skipping startup.");
+            return;
+        }
         ZonedDateTime nowEt = ZonedDateTime.now(ZoneId.of(cronZone));
         LocalTime nowTime   = nowEt.toLocalTime();
         DayOfWeek day       = nowEt.getDayOfWeek();
@@ -80,6 +87,10 @@ public class MassiveWebSocketClient {
     }
 
     public void connect() {
+        if (!enabled) {
+            log.info("Massive WebSocket disabled — connect() is a no-op.");
+            return;
+        }
         if (activeWebSocket.get() != null) {
             log.info("WebSocket is already connected.");
             return;

@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: stocklistener
@@ -85,6 +86,7 @@ cron:
     run: "0 0 8 * * MON-SAT"   # 08:00 ET weekdays + Saturday (covers Friday's data)
 
 massive:
+  enabled: true
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
   cron:
