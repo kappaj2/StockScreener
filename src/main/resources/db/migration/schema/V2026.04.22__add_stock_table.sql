@@ -1,21 +1,27 @@
-CREATE TABLE minute_bar (
-    id                 BIGINT          NOT NULL AUTO_INCREMENT,
-    symbol             VARCHAR(20)     NOT NULL,
-    bar_start          DATETIME(3)     NOT NULL,
-    bar_end            DATETIME(3)     NOT NULL,
-    open_price         DECIMAL(18, 6)  NOT NULL,
-    high_price         DECIMAL(18, 6)  NOT NULL,
-    low_price          DECIMAL(18, 6)  NOT NULL,
-    close_price        DECIMAL(18, 6)  NOT NULL,
-    volume             BIGINT          NOT NULL,
-    accumulated_volume BIGINT          NOT NULL,
-    official_open      DECIMAL(18, 6)  NULL,
-    vwap               DECIMAL(18, 6)  NULL,
-    today_vwap         DECIMAL(18, 6)  NULL,
-    avg_trade_size     INT             NULL,
-    created_at         DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    PRIMARY KEY (id),
-    INDEX idx_minute_bar_symbol_start (symbol, bar_start),
-    INDEX idx_minute_bar_bar_start (bar_start)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+CREATE TABLE IF NOT EXISTS minute_bar
+(
+    symbol             VARCHAR(20)    NOT NULL,
+    bar_start          DATETIME(3)    NOT NULL,
+    bar_end            DATETIME(3)    NOT NULL,
+    open_price         DECIMAL(18, 6) NOT NULL,
+    high_price         DECIMAL(18, 6) NOT NULL,
+    low_price          DECIMAL(18, 6) NOT NULL,
+    close_price        DECIMAL(18, 6) NOT NULL,
+    volume             BIGINT         NOT NULL,
+    accumulated_volume BIGINT         NOT NULL,
+    official_open      DECIMAL(18, 6),
+    vwap               DECIMAL(18, 6),
+    today_vwap         DECIMAL(18, 6),
+    avg_trade_size     INT,
+    created_at         DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (symbol, bar_start),
+    KEY idx_bar_start (bar_start)
+
+)
+    PARTITION BY RANGE (TO_DAYS(bar_start)) (
+        PARTITION p202604 VALUES LESS THAN (TO_DAYS('2026-05-01')),
+        PARTITION p202605 VALUES LESS THAN (TO_DAYS('2026-06-01')),
+        PARTITION p202606 VALUES LESS THAN (TO_DAYS('2026-07-01')),
+        PARTITION pmax VALUES LESS THAN MAXVALUE
+        );

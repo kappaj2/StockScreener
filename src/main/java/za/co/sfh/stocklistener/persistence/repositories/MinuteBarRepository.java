@@ -6,12 +6,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
+import za.co.sfh.stocklistener.persistence.entities.MinuteBarId;
 
 import java.time.Instant;
 import java.util.List;
 
 @Repository
-public interface MinuteBarRepository extends JpaRepository<MinuteBarEntity, Long> {
+public interface MinuteBarRepository extends JpaRepository<MinuteBarEntity, MinuteBarId> {
 
     List<MinuteBarEntity> findBySymbolAndBarStartBetweenOrderByBarStartAsc(
             String symbol, Instant from, Instant to);

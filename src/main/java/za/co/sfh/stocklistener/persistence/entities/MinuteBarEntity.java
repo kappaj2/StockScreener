@@ -8,9 +8,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
+@IdClass(MinuteBarId.class)
 @Table(name = "minute_bar", indexes = {
-        @Index(name = "idx_minute_bar_symbol_start", columnList = "symbol, bar_start"),
-        @Index(name = "idx_minute_bar_bar_start", columnList = "bar_start")
+        @Index(name = "idx_bar_start", columnList = "bar_start"),
+        @Index(name = "idx_minute_bar_created_at", columnList = "created_at")
 })
 @Getter
 @Builder
@@ -19,12 +20,10 @@ import java.time.Instant;
 public class MinuteBarEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(nullable = false, length = 20)
     private String symbol;
 
+    @Id
     @Column(name = "bar_start", nullable = false)
     private Instant barStart;
 

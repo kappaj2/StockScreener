@@ -9,6 +9,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
+import za.co.sfh.stocklistener.DatabaseContainerTest;
 import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
@@ -33,7 +34,7 @@ import static org.mockito.Mockito.when;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-class DailySymbolReplayIntegrationTest {
+class DailySymbolReplayIntegrationTest implements DatabaseContainerTest {
 
     @Autowired
     private MessageProcessor messageProcessor;

@@ -79,6 +79,10 @@ server:
 cron:
   purge:
     minute-bar: "0 0 2 * * *"
+  partition:
+    add-next: "0 0 2 * * *"
+  daily-summary:
+    run: "0 0 8 * * MON-SAT"   # 08:00 ET weekdays + Saturday (covers Friday's data)
 
 massive:
   api-key: ${MASSIVE_API_KEY}
@@ -90,6 +94,10 @@ massive:
   window:
     start: "04:00"
     stop: "20:00"
+  retry:
+    initial-delay-seconds: 5
+    max-delay-seconds: 60
+    max-attempts: 0   # 0 = unlimited retries within the trading window
 
 # Filter stocks before we show interest. Bar must be at least 2 dollar and volume must be at least 50k
 filter:
