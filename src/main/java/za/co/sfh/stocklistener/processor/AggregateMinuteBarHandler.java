@@ -16,6 +16,9 @@ import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,24 +40,23 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
     private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
 
+    private static final ZoneId ET = ZoneId.of("America/New_York");
+    private static final LocalTime MARKET_OPEN = LocalTime.of(9, 30);
+
     @Value("${filter.min-close}")
     private double minClose;
+
+    @Value("${filter.max-close}")
+    private double maxClose;
 
     @Value("${filter.min-volume}")
     private long minVolume;
 
+    @Value("${filter.min-avg-daily-volume}")
+    private long minAvgDailyVolume;
+
     public Optional<SymbolState> getState(String symbol) {
         return Optional.ofNullable(stateMap.get(symbol));
-    }
-
-    private void persistMinuteBarAsync(AggregateMinuteBar bar) {
-        persistenceExecutor.submit(() -> {
-            try {
-                minuteBarRepository.save(MinuteBarEntity.from(bar));
-            } catch (Exception e) {
-                log.warn("[{}] Failed to persist minute bar", bar.symbol(), e);
-            }
-        });
     }
 
     @PreDestroy
@@ -79,8 +81,13 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     public void handle(JsonNode node) {
         var bar = objectMapper.convertValue(node, AggregateMinuteBar.class);
 
-        //  Filter out small value and small volumes candles. Not screening those.
-        if (bar.close() < minClose || bar.volume() < minVolume) {
+        if (bar.close() < minClose || bar.close() > maxClose || bar.volume() < minVolume) {
+            log.debug("[{}] Filtered by price/volume thresholds: close={} volume={}", bar.symbol(), bar.close(), bar.volume());
+            return;
+        }
+
+        if (avgDailyVolumePerMinute(bar) < minAvgDailyVolume) {
+            log.debug("[{}] Filtered by avg daily volume: accumulatedVolume={}", bar.symbol(), bar.accumulatedVolume());
             return;
         }
 
@@ -113,5 +120,30 @@ public class AggregateMinuteBarHandler implements MessageHandler {
                 }
             });
         }
+    }
+
+    /**
+     * Returns the average per-minute volume for the current session, computed as
+     * {@code accumulatedVolume / minutesElapsed} since market open (9:30 ET).
+     * Returns {@link Long#MAX_VALUE} for pre-market bars so they are never filtered out
+     * by the avg-daily-volume gate before the regular session has had a chance to build up.
+     */
+    private long avgDailyVolumePerMinute(AggregateMinuteBar bar) {
+        LocalTime barTime = bar.startTimestampMs().withZoneSameInstant(ET).toLocalTime();
+        if (!barTime.isAfter(MARKET_OPEN)) {
+            return Long.MAX_VALUE;
+        }
+        long minutesElapsed = Duration.between(MARKET_OPEN, barTime).toMinutes() + 1;
+        return bar.accumulatedVolume() / minutesElapsed;
+    }
+
+    private void persistMinuteBarAsync(AggregateMinuteBar bar) {
+        persistenceExecutor.submit(() -> {
+            try {
+                minuteBarRepository.save(MinuteBarEntity.from(bar));
+            } catch (Exception e) {
+                log.warn("[{}] Failed to persist minute bar", bar.symbol(), e);
+            }
+        });
     }
 }

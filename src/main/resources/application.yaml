@@ -101,10 +101,13 @@ massive:
     max-delay-seconds: 60
     max-attempts: 0   # 0 = unlimited retries within the trading window
 
-# Filter stocks before we show interest. Bar must be at least 2 dollar and volume must be at least 50k
+# Filter stocks before we show interest.
+# Price: $2–$150. Volume: per-bar >= 500, running daily avg per minute >= 20 000.
 filter:
-  min-close: 0.1
+  min-close: 2.0
+  max-close: 150.0
   min-volume: 500
+  min-avg-daily-volume: 20000
 
 patterns:
   breakout:

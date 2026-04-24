@@ -141,7 +141,7 @@ public class MomentumStrengthScanner implements PatternScanner {
         // ── Layer 3: volume gate + tier evaluation ─────────────────────────────
         MomentumTier tier = evaluate(score.total, vol);
 
-        if (tier == MomentumTier.NEUTRAL || tier == MomentumTier.MODERATE) {
+        if (tier != MomentumTier.VERY_HIGH) {
             return Optional.empty();
         }
 

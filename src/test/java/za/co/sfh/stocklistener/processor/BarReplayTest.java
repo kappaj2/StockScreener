@@ -88,7 +88,9 @@ class BarReplayTest {
     /** Inject the @Value filter defaults so the handler works without a Spring context. */
     private void injectFilterDefaults(AggregateMinuteBarHandler handler) throws Exception {
         setField(handler, "minClose", 2.0);
+        setField(handler, "maxClose", 150.0);
         setField(handler, "minVolume", 50_000L);
+        setField(handler, "minAvgDailyVolume", 20_000L);
     }
 
     @SuppressWarnings("unchecked")
