@@ -78,11 +78,15 @@ public class MassiveWebSocketClient {
             return;
         }
 
-        if (nowTime.isAfter(start) && nowTime.isBefore(stop)) {
-            log.info("ET time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
+        boolean withinWindow = start.isBefore(stop)
+                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
+                : nowTime.isAfter(start) || nowTime.isBefore(stop);
+
+        if (withinWindow) {
+            log.info("Local time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
             connect();
         } else {
-            log.info("ET time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
+            log.info("Local time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
         }
     }
 
@@ -158,7 +162,11 @@ public class MassiveWebSocketClient {
             return;
         }
 
-        if (!nowTime.isAfter(start) || !nowTime.isBefore(stop)) {
+        boolean withinWindow = start.isBefore(stop)
+                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
+                : nowTime.isAfter(start) || nowTime.isBefore(stop);
+
+        if (!withinWindow) {
             log.info("Outside trading window ({} - {}) — not reconnecting.", windowStart, windowStop);
             retryCount.set(0);
             return;
@@ -188,8 +196,10 @@ public class MassiveWebSocketClient {
             DayOfWeek day2        = nowEt2.getDayOfWeek();
             LocalTime start2      = LocalTime.parse(windowStart);
             LocalTime stop2       = LocalTime.parse(windowStop);
-            if (day2 == DayOfWeek.SATURDAY || day2 == DayOfWeek.SUNDAY
-                    || !nowTime2.isAfter(start2) || !nowTime2.isBefore(stop2)) {
+            boolean withinWindow2 = start2.isBefore(stop2)
+                    ? nowTime2.isAfter(start2) && nowTime2.isBefore(stop2)
+                    : nowTime2.isAfter(start2) || nowTime2.isBefore(stop2);
+            if (day2 == DayOfWeek.SATURDAY || day2 == DayOfWeek.SUNDAY || !withinWindow2) {
                 log.info("Trading window closed before reconnect attempt #{} — aborting.", attempt);
                 retryCount.set(0);
                 return;

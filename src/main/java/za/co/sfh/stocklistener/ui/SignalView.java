@@ -82,11 +82,16 @@ public class SignalView extends VerticalLayout {
                 .set("flex", "1");
 
         // Configure the Grid columns
-        grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "risk", "notes");
+        grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "notes");
 
         // Make all auto-generated columns resizable and constrain the wide pattern column
         grid.getColumns().forEach(col -> col.setResizable(true));
         grid.getColumnByKey("pattern").setWidth("150px").setFlexGrow(0);
+
+        grid.addColumn(signal -> String.format("%.1f%%", (signal.target() - signal.entry()) / signal.entry() * 100))
+                .setHeader("% Gain")
+                .setSortable(true)
+                .setResizable(true);
 
         grid.addColumn(signal -> FORMATTER.format(Instant.ofEpochMilli(signal.timestamp())))
                 .setHeader("Generated At")

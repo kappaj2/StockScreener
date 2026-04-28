@@ -90,12 +90,12 @@ massive:
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
   cron:
-    start: "0 0 4 * * MON-FRI"
-    stop: "0 0 20 * * MON-FRI"
-    zone: "America/New_York"
+    start: "0 0 10 * * MON-FRI"
+    stop: "0 0 2 * * TUE-SAT"
+    zone: "Africa/Johannesburg"
   window:
-    start: "04:00"
-    stop: "20:00"
+    start: "10:00"
+    stop: "02:00"
   retry:
     initial-delay-seconds: 5
     max-delay-seconds: 60
@@ -132,6 +132,9 @@ patterns:
     very-high-score: 10         # minimum score for a VERY_HIGH_MOMENTUM signal (volume gate still applies)
     rsi-strong-threshold: 60.0  # RSI level that awards the "strong momentum" bonus point
     ollama-enabled: false        # set true to re-enable Ollama second-opinion calls
+    min-volume: 30000           # ignore bars with volume below this (small-cap noise filter)
+    min-pct-change: 5.0         # minimum % price change over pct-change-bars to confirm momentum
+    pct-change-bars: 5          # look-back window (bars) for the % change gate
 
 indicators:
   rsi:
