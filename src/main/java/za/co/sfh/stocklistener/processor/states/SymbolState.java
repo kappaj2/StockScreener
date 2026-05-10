@@ -30,6 +30,7 @@ public final class SymbolState {
     private String symbol;
     private double avgRange;
     private double avgVolume;
+    private double avgClose;
     private double preMarketHigh = Double.MIN_VALUE;
     private double preMarketLow  = Double.MAX_VALUE;
 
@@ -123,14 +124,17 @@ public final class SymbolState {
 
         double totalRange = 0;
         double totalVolume = 0;
+        double totalClose = 0;
 
         for (AggregateMinuteBar b : candles) {
-            totalRange += (b.high() - b.low());
+            totalRange  += (b.high() - b.low());
             totalVolume += b.volume();
+            totalClose  += b.close();
         }
 
-        avgRange = totalRange / candles.size();
+        avgRange  = totalRange  / candles.size();
         avgVolume = totalVolume / candles.size();
+        avgClose  = totalClose  / candles.size();
     }
 
     public List<AggregateMinuteBar> getCandles() {
@@ -144,7 +148,7 @@ public final class SymbolState {
 
     public SymbolStateSnapshot toSnapshot() {
         return new SymbolStateSnapshot(
-                symbol, avgRange, avgVolume,
+                symbol, avgRange, avgVolume, avgClose,
                 preMarketHigh, preMarketLow,
                 cumulativePV, cumulativeVolume, vwap, sessionDate,
                 ema9, totalBars, emaSeedSum,
@@ -157,6 +161,7 @@ public final class SymbolState {
         symbol           = s.symbol();
         avgRange         = s.avgRange();
         avgVolume        = s.avgVolume();
+        avgClose         = s.avgClose();
         preMarketHigh    = s.preMarketHigh();
         preMarketLow     = s.preMarketLow();
         cumulativePV     = s.cumulativePV();

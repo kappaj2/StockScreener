@@ -94,7 +94,7 @@ public class UnsharpenPatternScanner implements PatternScanner {
                 "unknown",
                 String.format("Bearish bar → Bullish JohnWick (low=%.4f, high=%.4f) → Green breakout close=%.4f",
                         johnWickBar.low(), johnWickBar.high(), entry),
-                System.currentTimeMillis(),
+                bar.endTimestampMs().toInstant().toEpochMilli(),
                 state.getPreMarketHigh(),
                 state.getPreMarketLow(),
                 null

@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: stocklistener
@@ -78,13 +79,14 @@ server:
 
 cron:
   purge:
-    minute-bar: "0 0 2 * * *"
+    minute-bar: "0 0 20 * * *"
   partition:
-    add-next: "0 0 2 * * *"
+    add-next: "0 0 20 * * *"
   daily-summary:
-    run: "0 0 8 * * MON-SAT"   # 08:00 ET weekdays + Saturday (covers Friday's data)
+    run: "0 0 2 * * MON-SAT"   # 02:00 ET weekdays + Saturday (covers Friday's data)
 
 massive:
+  enabled: true
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
   cron:
@@ -99,10 +101,13 @@ massive:
     max-delay-seconds: 60
     max-attempts: 0   # 0 = unlimited retries within the trading window
 
-# Filter stocks before we show interest. Bar must be at least 2 dollar and volume must be at least 50k
+# Filter stocks before we show interest.
+# Price: $2–$150. Volume: per-bar >= 500, running daily avg per minute >= 20 000.
 filter:
-  min-close: 0.1
+  min-close: 2.0
+  max-close: 250.0
   min-volume: 500
+  min-avg-daily-volume: 20000
 
 patterns:
   breakout:
@@ -127,6 +132,9 @@ patterns:
     very-high-score: 10         # minimum score for a VERY_HIGH_MOMENTUM signal (volume gate still applies)
     rsi-strong-threshold: 60.0  # RSI level that awards the "strong momentum" bonus point
     ollama-enabled: false        # set true to re-enable Ollama second-opinion calls
+    min-volume: 30000           # ignore bars with volume below this (small-cap noise filter)
+    min-pct-change: 5.0         # minimum % price change over pct-change-bars to confirm momentum
+    pct-change-bars: 5          # look-back window (bars) for the % change gate
 
 indicators:
   rsi:

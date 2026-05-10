@@ -33,6 +33,9 @@ public class MassiveWebSocketClient {
     private final AtomicBoolean intentionalDisconnect = new AtomicBoolean(false);
     private final AtomicInteger retryCount = new AtomicInteger(0);
 
+    @Value("${massive.enabled:true}")
+    private boolean enabled;
+
     @Value("${massive.api-key}")
     private String apiKey;
 
@@ -60,6 +63,10 @@ public class MassiveWebSocketClient {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
+        if (!enabled) {
+            log.info("Massive WebSocket disabled via massive.enabled=false — skipping startup.");
+            return;
+        }
         ZonedDateTime nowEt = ZonedDateTime.now(ZoneId.of(cronZone));
         LocalTime nowTime   = nowEt.toLocalTime();
         DayOfWeek day       = nowEt.getDayOfWeek();
@@ -71,15 +78,23 @@ public class MassiveWebSocketClient {
             return;
         }
 
-        if (nowTime.isAfter(start) && nowTime.isBefore(stop)) {
-            log.info("ET time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
+        boolean withinWindow = start.isBefore(stop)
+                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
+                : nowTime.isAfter(start) || nowTime.isBefore(stop);
+
+        if (withinWindow) {
+            log.info("Local time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
             connect();
         } else {
-            log.info("ET time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
+            log.info("Local time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
         }
     }
 
     public void connect() {
+        if (!enabled) {
+            log.info("Massive WebSocket disabled — connect() is a no-op.");
+            return;
+        }
         if (activeWebSocket.get() != null) {
             log.info("WebSocket is already connected.");
             return;
@@ -147,7 +162,11 @@ public class MassiveWebSocketClient {
             return;
         }
 
-        if (!nowTime.isAfter(start) || !nowTime.isBefore(stop)) {
+        boolean withinWindow = start.isBefore(stop)
+                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
+                : nowTime.isAfter(start) || nowTime.isBefore(stop);
+
+        if (!withinWindow) {
             log.info("Outside trading window ({} - {}) — not reconnecting.", windowStart, windowStop);
             retryCount.set(0);
             return;
@@ -177,8 +196,10 @@ public class MassiveWebSocketClient {
             DayOfWeek day2        = nowEt2.getDayOfWeek();
             LocalTime start2      = LocalTime.parse(windowStart);
             LocalTime stop2       = LocalTime.parse(windowStop);
-            if (day2 == DayOfWeek.SATURDAY || day2 == DayOfWeek.SUNDAY
-                    || !nowTime2.isAfter(start2) || !nowTime2.isBefore(stop2)) {
+            boolean withinWindow2 = start2.isBefore(stop2)
+                    ? nowTime2.isAfter(start2) && nowTime2.isBefore(stop2)
+                    : nowTime2.isAfter(start2) || nowTime2.isBefore(stop2);
+            if (day2 == DayOfWeek.SATURDAY || day2 == DayOfWeek.SUNDAY || !withinWindow2) {
                 log.info("Trading window closed before reconnect attempt #{} — aborting.", attempt);
                 retryCount.set(0);
                 return;

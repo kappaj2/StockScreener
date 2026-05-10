@@ -49,12 +49,17 @@ public class BreakoutPatternScanner implements PatternScanner {
         if (previousRange < 0.05 * previousBar.close()) return Optional.empty();
 
         boolean confirmed = range > 2 * state.getAvgRange() &&
-                bar.volume() > 2 * state.getAvgVolume();
+                bar.volume() > 2 * state.getAvgVolume() &&
+                bar.close() > state.getAvgClose();
 
-        log.debug("Breakout check [symbol: {}; range: {}; avgRange: {}; volume: {}; avgVolume: {}; confirmed: {}]",
-                bar.symbol(), range, state.getAvgRange(), bar.volume(), state.getAvgVolume(), confirmed);
+        log.debug("Breakout check [symbol: {}; range: {}; avgRange: {}; volume: {}; avgVolume: {}; close: {}; avgClose: {}; confirmed: {}]",
+                bar.symbol(), range, state.getAvgRange(), bar.volume(), state.getAvgVolume(),
+                bar.close(), state.getAvgClose(), confirmed);
 
         if (!confirmed) return Optional.empty();
+
+        log.info("Breakout above average [symbol: {}; close: {}; avgClose: {}; txTime: {}]",
+                bar.symbol(), bar.close(), state.getAvgClose(), bar.endTimestampMs());
 
         log.debug("Previous bar [{}]", previousBar);
         log.debug("This bar [{}]", bar);
@@ -69,7 +74,7 @@ public class BreakoutPatternScanner implements PatternScanner {
                 100,
                 "unknown",
                 "rule-based breakout",
-                System.currentTimeMillis(),
+                bar.endTimestampMs().toInstant().toEpochMilli(),
                 state.getPreMarketHigh(),
                 state.getPreMarketLow(),
                 null

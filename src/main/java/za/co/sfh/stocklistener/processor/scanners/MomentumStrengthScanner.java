@@ -99,6 +99,18 @@ public class MomentumStrengthScanner implements PatternScanner {
     @Value("${patterns.momentum.ollama-enabled:true}")
     private boolean ollamaEnabled;
 
+    /** Minimum bar volume — bars below this threshold are ignored (small-cap noise filter). */
+    @Value("${patterns.momentum.min-volume:30000}")
+    private long minVolume;
+
+    /** Minimum % price change over the look-back window required to confirm momentum. */
+    @Value("${patterns.momentum.min-pct-change:5.0}")
+    private double minPctChange;
+
+    /** Number of bars to look back when computing the % price change gate. */
+    @Value("${patterns.momentum.pct-change-bars:5}")
+    private int pctChangeBars;
+
     // ── PatternScanner contract ───────────────────────────────────────────────
 
     @Override
@@ -110,6 +122,17 @@ public class MomentumStrengthScanner implements PatternScanner {
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
         List<AggregateMinuteBar> candles = state.getCandles();
         if (candles.size() < 20) return Optional.empty();
+
+        if (bar.volume() < minVolume) return Optional.empty();
+
+        if (candles.size() > pctChangeBars) {
+            AggregateMinuteBar nBarsAgo = candles.get(candles.size() - 1 - pctChangeBars);
+            double pctChange = (bar.close() - nBarsAgo.close()) / nBarsAgo.close() * 100;
+            if (pctChange > 2) {
+                log.debug("pctChange for {} is only: {}", bar.symbol(), pctChange);
+            }
+            if (pctChange < minPctChange) return Optional.empty();
+        }
 
         // ── Long-only structural price guards ─────────────────────────────────
         // 1. Current candle must be bullish
@@ -141,7 +164,7 @@ public class MomentumStrengthScanner implements PatternScanner {
         // ── Layer 3: volume gate + tier evaluation ─────────────────────────────
         MomentumTier tier = evaluate(score.total, vol);
 
-        if (tier == MomentumTier.NEUTRAL || tier == MomentumTier.MODERATE) {
+        if (tier != MomentumTier.VERY_HIGH) {
             return Optional.empty();
         }
 
@@ -192,7 +215,7 @@ public class MomentumStrengthScanner implements PatternScanner {
                 confidence,
                 risk,
                 notes,
-                System.currentTimeMillis(),
+                bar.endTimestampMs().toInstant().toEpochMilli(),
                 state.getPreMarketHigh(),
                 state.getPreMarketLow(),
                 null
