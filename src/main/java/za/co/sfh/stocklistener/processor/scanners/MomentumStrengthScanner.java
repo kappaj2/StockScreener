@@ -128,7 +128,9 @@ public class MomentumStrengthScanner implements PatternScanner {
         if (candles.size() > pctChangeBars) {
             AggregateMinuteBar nBarsAgo = candles.get(candles.size() - 1 - pctChangeBars);
             double pctChange = (bar.close() - nBarsAgo.close()) / nBarsAgo.close() * 100;
-            log.debug("pctChange for {} is only: {}", bar.symbol(), pctChange);
+            if (pctChange > 2) {
+                log.debug("pctChange for {} is only: {}", bar.symbol(), pctChange);
+            }
             if (pctChange < minPctChange) return Optional.empty();
         }
 
@@ -213,7 +215,7 @@ public class MomentumStrengthScanner implements PatternScanner {
                 confidence,
                 risk,
                 notes,
-                System.currentTimeMillis(),
+                bar.endTimestampMs().toInstant().toEpochMilli(),
                 state.getPreMarketHigh(),
                 state.getPreMarketLow(),
                 null

@@ -79,23 +79,23 @@ server:
 
 cron:
   purge:
-    minute-bar: "0 0 2 * * *"
+    minute-bar: "0 0 20 * * *"
   partition:
-    add-next: "0 0 2 * * *"
+    add-next: "0 0 20 * * *"
   daily-summary:
-    run: "0 0 8 * * MON-SAT"   # 08:00 ET weekdays + Saturday (covers Friday's data)
+    run: "0 0 2 * * MON-SAT"   # 02:00 ET weekdays + Saturday (covers Friday's data)
 
 massive:
   enabled: true
   api-key: ${MASSIVE_API_KEY}
   symbols: AM.*
   cron:
-    start: "0 0 10 * * MON-FRI"
-    stop: "0 0 2 * * TUE-SAT"
-    zone: "Africa/Johannesburg"
+    start: "0 0 4 * * MON-FRI"
+    stop: "0 0 20 * * MON-FRI"
+    zone: "America/New_York"
   window:
-    start: "10:00"
-    stop: "02:00"
+    start: "04:00"
+    stop: "20:00"
   retry:
     initial-delay-seconds: 5
     max-delay-seconds: 60
@@ -105,7 +105,7 @@ massive:
 # Price: $2–$150. Volume: per-bar >= 500, running daily avg per minute >= 20 000.
 filter:
   min-close: 2.0
-  max-close: 150.0
+  max-close: 250.0
   min-volume: 500
   min-avg-daily-volume: 20000
 

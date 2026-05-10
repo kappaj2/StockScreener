@@ -14,6 +14,7 @@ public record SymbolStateSnapshot(
         String symbol,
         double avgRange,
         double avgVolume,
+        double avgClose,
         double preMarketHigh,
         double preMarketLow,
         double cumulativePV,
