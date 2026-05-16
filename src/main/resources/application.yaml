@@ -168,6 +168,10 @@ ibkr:
 stockwatch:
   valid-days: 60   # how long a symbol stays on the watch list before expiring
 
+paper-trading:
+  account-size: 100000        # total paper account size in USD
+  max-trade-percentage: 0.01  # max position size as fraction of account (1%)
+
 ollama:
   breakout:
     min-confidence: 70   # minimum Ollama confidence % to emit a signal
