@@ -11,10 +11,12 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
@@ -35,6 +37,12 @@ public class SignalView extends VerticalLayout {
     private Registration pollRegistration;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.of("America/New_York"));
+
+    @Value("${paper-trading.account-size}")
+    private double accountSize;
+
+    @Value("${paper-trading.max-trade-percentage}")
+    private double maxTradePercentage;
 
     @PostConstruct
     private void init() {
@@ -90,6 +98,18 @@ public class SignalView extends VerticalLayout {
         grid.addColumn(BreakoutSignal::stop).setHeader("Stop").setResizable(true);
         grid.addColumn(BreakoutSignal::target).setHeader("Target").setResizable(true);
         grid.addColumn(BreakoutSignal::confidence).setHeader("Conf").setResizable(true);
+        grid.addComponentColumn(signal -> {
+            double budget = accountSize * maxTradePercentage;
+            int shares = (int)(budget / signal.entry());
+            double tradeValue = shares * signal.entry();
+            Span cell = new Span(shares + " sh / $" + String.format("%,.2f", tradeValue));
+            cell.getStyle().set("cursor", "help").set("white-space", "nowrap");
+            Tooltip.forComponent(cell).withText(String.format(
+                    "Shares: %d  |  Buy @ $%.2f  |  Total: $%,.2f  |  Budget: $%,.0f (%.0f%% of $%,.0f)",
+                    shares, signal.entry(), tradeValue,
+                    budget, maxTradePercentage * 100, accountSize));
+            return cell;
+        }).setHeader("Trade").setAutoWidth(true).setFlexGrow(0).setResizable(true);
         grid.addColumn(BreakoutSignal::notes).setHeader("Notes").setResizable(true);
 
         grid.getColumns().forEach(col -> col.setResizable(true));
