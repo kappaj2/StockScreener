@@ -1,15 +1,18 @@
 package za.co.sfh.stocklistener.signals;
 
-/**
- * Canonical names for all pattern scanner types.
- * Used in {@link BreakoutSignal#pattern()} so callers compare enum constants
- * rather than magic strings.
- */
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum PatternType {
-    BREAKOUT,
-    UNSHARPEN_MASK,
-    STRONG_CLIMB,
-    INVERTED_VEE,
-    MOMENTUM_VERY_HIGH,
-    MOMENTUM_HIGH
+    BREAKOUT("B"),
+    UNSHARPEN_MASK("UM"),
+    STRONG_CLIMB("SC"),
+    INVERTED_VEE("IV"),
+    MOMENTUM_VERY_HIGH("MVH"),
+    MOMENTUM_HIGH("MH"),
+    HIGH_WATCH("HW");
+
+    private final String code;
 }

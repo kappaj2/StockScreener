@@ -13,6 +13,7 @@ import za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository;
 import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
+import za.co.sfh.stocklistener.processor.stockwatch.HighWatchStockService;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
@@ -37,6 +38,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final SymbolStateRedisStore redisStore;
     private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
     private final MinuteBarRepository minuteBarRepository;
+    private final HighWatchStockService highWatchStockService;
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
     private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
 
@@ -116,7 +118,16 @@ public class AggregateMinuteBarHandler implements MessageHandler {
                                 s.symbol(), s.pattern(), s.entry());
                         return;
                     }
-                    signalStore.add(s);
+                    boolean onHighWatch = highWatchStockService.findBySymbol(s.symbol()).isPresent();
+                    BreakoutSignal toStore = onHighWatch
+                            ? new BreakoutSignal(s.id(), s.symbol(), s.pattern(), s.entry(), s.stop(),
+                                    s.target(), s.confidence(), s.risk(), s.notes(), s.timestamp(),
+                                    s.preMarketHigh(), s.preMarketLow(), s.news(), true)
+                            : s;
+                    if (onHighWatch) {
+                        log.info("[{}] HIGH WATCH match — {} → displaying as HW_{}", s.symbol(), s.pattern(), s.pattern().getCode());
+                    }
+                    signalStore.add(toStore);
                 }
             });
         }

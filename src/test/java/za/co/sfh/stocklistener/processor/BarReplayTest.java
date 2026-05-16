@@ -67,7 +67,12 @@ class BarReplayTest {
         za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository minuteBarRepository =
                 mock(za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository.class);
 
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle, minuteBarRepository);
+        za.co.sfh.stocklistener.processor.stockwatch.HighWatchStockService highWatchStockService =
+                mock(za.co.sfh.stocklistener.processor.stockwatch.HighWatchStockService.class);
+        org.mockito.Mockito.when(highWatchStockService.findBySymbol(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(java.util.Optional.empty());
+
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());

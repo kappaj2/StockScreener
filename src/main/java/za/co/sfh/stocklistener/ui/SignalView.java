@@ -13,7 +13,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
-import com.vaadin.flow.theme.lumo.Lumo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
@@ -22,17 +21,20 @@ import za.co.sfh.stocklistener.signals.SignalStore;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-@Route("") // This will be the home page
+@Route("")
 @RequiredArgsConstructor
 public class SignalView extends VerticalLayout {
 
     private final SignalStore signalStore;
-    private final Grid<BreakoutSignal> grid = new Grid<>(BreakoutSignal.class);
+    private final Grid<BreakoutSignal> grid = new Grid<>(BreakoutSignal.class, false);
+    private final Set<String> knownHighWatchIds = new HashSet<>();
     private Registration pollRegistration;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            .withZone(ZoneId.systemDefault());
+            .withZone(ZoneId.of("America/New_York"));
 
     @PostConstruct
     private void init() {
@@ -81,12 +83,16 @@ public class SignalView extends VerticalLayout {
                 .set("padding", "16px 24px")
                 .set("flex", "1");
 
-        // Configure the Grid columns
-        grid.setColumns("symbol", "pattern", "entry", "stop", "target", "confidence", "notes");
+        // Columns — pattern uses the short code so long enum names don't overflow
+        grid.addColumn(BreakoutSignal::symbol).setHeader("Symbol").setResizable(true);
+        grid.addColumn(BreakoutSignal::displayCode).setHeader("Pattern").setWidth("80px").setFlexGrow(0).setResizable(true);
+        grid.addColumn(BreakoutSignal::entry).setHeader("Entry").setResizable(true);
+        grid.addColumn(BreakoutSignal::stop).setHeader("Stop").setResizable(true);
+        grid.addColumn(BreakoutSignal::target).setHeader("Target").setResizable(true);
+        grid.addColumn(BreakoutSignal::confidence).setHeader("Conf").setResizable(true);
+        grid.addColumn(BreakoutSignal::notes).setHeader("Notes").setResizable(true);
 
-        // Make all auto-generated columns resizable and constrain the wide pattern column
         grid.getColumns().forEach(col -> col.setResizable(true));
-        grid.getColumnByKey("pattern").setWidth("150px").setFlexGrow(0);
 
         grid.addColumn(signal -> String.format("%.1f%%", (signal.target() - signal.entry()) / signal.entry() * 100))
                 .setHeader("% Gain")
@@ -94,7 +100,7 @@ public class SignalView extends VerticalLayout {
                 .setResizable(true);
 
         grid.addColumn(signal -> FORMATTER.format(Instant.ofEpochMilli(signal.timestamp())))
-                .setHeader("Generated At")
+                .setHeader("Bar Time (ET)")
                 .setSortable(true)
                 .setResizable(true);
         grid.addColumn(signal -> signal.preMarketHigh() == Double.MIN_VALUE ? "-" : String.format("%.2f", signal.preMarketHigh()))
@@ -128,7 +134,6 @@ public class SignalView extends VerticalLayout {
             return remove;
         }).setHeader("").setAutoWidth(true).setFlexGrow(0);
 
-        // Dark theme variants
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_NO_BORDER);
         grid.getElement().setAttribute("theme", "dark");
 
@@ -142,11 +147,7 @@ public class SignalView extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-
-        // Initial load
         refreshGrid();
-
-        // Enable polling every 1 second
         attachEvent.getUI().setPollInterval(1000);
         pollRegistration = attachEvent.getUI().addPollListener(event -> refreshGrid());
     }
@@ -158,13 +159,43 @@ public class SignalView extends VerticalLayout {
             pollRegistration.remove();
             pollRegistration = null;
         }
-        // Optionally disable polling if no other component needs it, 
-        // but often it's safer to just leave it if there are multiple views
         detachEvent.getUI().setPollInterval(-1);
     }
 
     private void refreshGrid() {
         List<BreakoutSignal> signals = signalStore.peekAll().reversed();
         grid.setItems(signals);
+        checkForNewHighWatchSignals(signals);
+    }
+
+    private void checkForNewHighWatchSignals(List<BreakoutSignal> signals) {
+        boolean hasNew = false;
+        for (BreakoutSignal s : signals) {
+            if (s.highWatch() && knownHighWatchIds.add(s.id())) {
+                hasNew = true;
+            }
+        }
+        if (hasNew) {
+            playHighWatchAlert();
+        }
+    }
+
+    private void playHighWatchAlert() {
+        getUI().ifPresent(ui -> ui.getPage().executeJs(
+                "try {" +
+                "  var ctx = new (window.AudioContext || window.webkitAudioContext)();" +
+                "  function beep(freq, start, dur) {" +
+                "    var o = ctx.createOscillator(), g = ctx.createGain();" +
+                "    o.connect(g); g.connect(ctx.destination);" +
+                "    o.frequency.value = freq; o.type = 'sine';" +
+                "    g.gain.setValueAtTime(0.4, ctx.currentTime + start);" +
+                "    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);" +
+                "    o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur);" +
+                "  }" +
+                "  beep(880, 0.0, 0.18);" +
+                "  beep(1100, 0.22, 0.18);" +
+                "  beep(880, 0.44, 0.28);" +
+                "} catch(e) { console.error('HW audio alert failed:', e); }"
+        ));
     }
 }

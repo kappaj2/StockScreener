@@ -65,7 +65,7 @@ public class SignalStore {
         pending.computeIfPresent(id, (k, s) -> new BreakoutSignal(
                 s.id(), s.symbol(), s.pattern(), s.entry(), s.stop(), s.target(),
                 s.confidence(), s.risk(), s.notes(), s.timestamp(),
-                s.preMarketHigh(), s.preMarketLow(), news
+                s.preMarketHigh(), s.preMarketLow(), news, s.highWatch()
         ));
     }
 

@@ -11,11 +11,7 @@ import za.co.sfh.stocklistener.processor.MessageProcessor;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
-import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,22 +38,13 @@ public class MassiveWebSocketClient {
     @Value("${massive.symbols}")
     private String symbols;
 
-    @Value("${massive.window.start}")
-    private String windowStart;
-
-    @Value("${massive.window.stop}")
-    private String windowStop;
-
-    @Value("${massive.cron.zone}")
-    private String cronZone;
-
     @Value("${massive.retry.initial-delay-seconds:5}")
     private long retryInitialDelaySeconds;
 
     @Value("${massive.retry.max-delay-seconds:60}")
     private long retryMaxDelaySeconds;
 
-    /** 0 = unlimited retries within the trading window */
+    /** 0 = unlimited retries */
     @Value("${massive.retry.max-attempts:0}")
     private int retryMaxAttempts;
 
@@ -67,27 +54,8 @@ public class MassiveWebSocketClient {
             log.info("Massive WebSocket disabled via massive.enabled=false — skipping startup.");
             return;
         }
-        ZonedDateTime nowEt = ZonedDateTime.now(ZoneId.of(cronZone));
-        LocalTime nowTime   = nowEt.toLocalTime();
-        DayOfWeek day       = nowEt.getDayOfWeek();
-        LocalTime start     = LocalTime.parse(windowStart);
-        LocalTime stop      = LocalTime.parse(windowStop);
-
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            log.info("Today is {} (ET) — no trading session at weekends.", day);
-            return;
-        }
-
-        boolean withinWindow = start.isBefore(stop)
-                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
-                : nowTime.isAfter(start) || nowTime.isBefore(stop);
-
-        if (withinWindow) {
-            log.info("Local time {} is within operating window ({} - {}), connecting...", nowTime, windowStart, windowStop);
-            connect();
-        } else {
-            log.info("Local time {} is outside operating window ({} - {}), waiting for scheduled start.", nowTime, windowStart, windowStop);
-        }
+        log.info("Starting permanent WebSocket connection to {}", WS_URI);
+        connect();
     }
 
     public void connect() {
@@ -151,27 +119,6 @@ public class MassiveWebSocketClient {
             return;
         }
 
-        ZonedDateTime nowEt = ZonedDateTime.now(ZoneId.of(cronZone));
-        LocalTime nowTime   = nowEt.toLocalTime();
-        DayOfWeek day       = nowEt.getDayOfWeek();
-        LocalTime start     = LocalTime.parse(windowStart);
-        LocalTime stop      = LocalTime.parse(windowStop);
-
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            log.info("Weekend — not reconnecting.");
-            return;
-        }
-
-        boolean withinWindow = start.isBefore(stop)
-                ? nowTime.isAfter(start) && nowTime.isBefore(stop)
-                : nowTime.isAfter(start) || nowTime.isBefore(stop);
-
-        if (!withinWindow) {
-            log.info("Outside trading window ({} - {}) — not reconnecting.", windowStart, windowStop);
-            retryCount.set(0);
-            return;
-        }
-
         int attempt = retryCount.incrementAndGet();
         if (retryMaxAttempts > 0 && attempt > retryMaxAttempts) {
             log.warn("Max reconnect attempts ({}) reached — giving up.", retryMaxAttempts);
@@ -188,20 +135,6 @@ public class MassiveWebSocketClient {
                 Thread.sleep(Duration.ofSeconds(delaySeconds));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return;
-            }
-            // Re-check trading window after the sleep
-            ZonedDateTime nowEt2  = ZonedDateTime.now(ZoneId.of(cronZone));
-            LocalTime nowTime2    = nowEt2.toLocalTime();
-            DayOfWeek day2        = nowEt2.getDayOfWeek();
-            LocalTime start2      = LocalTime.parse(windowStart);
-            LocalTime stop2       = LocalTime.parse(windowStop);
-            boolean withinWindow2 = start2.isBefore(stop2)
-                    ? nowTime2.isAfter(start2) && nowTime2.isBefore(stop2)
-                    : nowTime2.isAfter(start2) || nowTime2.isBefore(stop2);
-            if (day2 == DayOfWeek.SATURDAY || day2 == DayOfWeek.SUNDAY || !withinWindow2) {
-                log.info("Trading window closed before reconnect attempt #{} — aborting.", attempt);
-                retryCount.set(0);
                 return;
             }
             activeWebSocket.set(null);
