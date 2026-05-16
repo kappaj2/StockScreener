@@ -118,6 +118,15 @@ patterns:
     stop: 0.97
     target: 1.06
     storeSignal: false
+  htf:
+    target: 1.15                 # price target multiplier (entry × target)
+    storeSignal: false           # disabled until validated in live session
+    min-advance-pct: 30.0        # minimum % advance leading to the pole top (over ~20 trading days)
+    max-pullback-pct: 25.0       # maximum pullback from pole high during the flag
+    lookback-days: 60            # trading days of daily history to examine
+    ma-period: 20                # SMA period for the "surfing the MA" check
+    min-consolidation-days: 5    # minimum flag days before a breakout can trigger
+    volume-multiplier: 1.5       # minute-bar volume must exceed avgVolume × this on breakout
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:
