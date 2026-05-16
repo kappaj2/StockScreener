@@ -10,14 +10,9 @@ import za.co.sfh.stocklistener.signals.SignalStore;
 import java.util.Optional;
 
 /**
- * Orchestrates the daily trading session lifecycle.
- *
- * <ul>
- *   <li><b>04:00</b> — roll the bar recorder to a new date file, clear the signal store,
- *       then open the WebSocket connection.</li>
- *   <li><b>20:00</b> — close the WebSocket connection. Signal store is intentionally left
- *       intact for evening analysis.</li>
- * </ul>
+ * Daily housekeeping at session start (04:00 ET weekdays):
+ * rolls the bar recorder to a new date file, clears the signal store,
+ * and ensures the WebSocket is connected (no-op if already up).
  */
 @Slf4j
 @Component
@@ -28,9 +23,6 @@ public class DailySessionScheduler {
     private final SignalStore signalStore;
     private final Optional<BarRecorder> barRecorder;
 
-    /**
-     * Session start: roll recorder file → clear signals → connect WebSocket.
-     */
     @Scheduled(cron = "${massive.cron.start}", zone = "${massive.cron.zone}")
     public void sessionStart() {
         log.info("=== Daily session START ===");
@@ -44,14 +36,5 @@ public class DailySessionScheduler {
         signalStore.ackAll();
 
         webSocketClient.connect();
-    }
-
-    /**
-     * Session stop: disconnect WebSocket. Signal store is preserved for review.
-     */
-    @Scheduled(cron = "${massive.cron.stop}", zone = "${massive.cron.zone}")
-    public void sessionStop() {
-        log.info("=== Daily session STOP ===");
-        webSocketClient.disconnect();
     }
 }

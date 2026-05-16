@@ -1,5 +1,10 @@
 package za.co.sfh.stocklistener.ibkr;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,43 +13,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * REST API for the IBKR real-time tape.
- *
- * <pre>
- *   GET    /api/tape/{symbol}            — last N prints for a symbol
- *   POST   /api/tape/subscribe/{symbol}  — start streaming a symbol
- *   DELETE /api/tape/subscribe/{symbol}  — stop streaming and clear buffer
- *   GET    /api/tape/symbols             — list all subscribed symbols
- *   GET    /api/tape/status              — connection status
- * </pre>
- */
 @RestController
 @RequestMapping("/api/tape")
 @RequiredArgsConstructor
+@Tag(name = "IBKR Tape", description = "Interactive Brokers real-time time-and-sales tape")
 public class IbkrTapeController {
 
     private final IbkrTapeClient tapeClient;
     private final IbkrTickStore  tickStore;
 
-    /**
-     * Returns the rolling tape buffer for {@code symbol} (oldest first).
-     * Returns 404 if the symbol has never been subscribed or has no ticks yet.
-     */
+    @Operation(summary = "Get rolling tape for a symbol",
+            description = "Returns the rolling tick buffer for the symbol (oldest first). 404 if never subscribed or no ticks yet.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tick buffer returned"),
+            @ApiResponse(responseCode = "404", description = "Symbol not subscribed or no ticks")
+    })
     @GetMapping("/{symbol}")
-    public ResponseEntity<List<IbkrTickEvent>> getTape(@PathVariable String symbol) {
+    public ResponseEntity<List<IbkrTickEvent>> getTape(
+            @Parameter(description = "Ticker symbol") @PathVariable String symbol) {
         var ticks = tickStore.getTicks(symbol.toUpperCase());
         return ticks.isEmpty()
                 ? ResponseEntity.notFound().build()
                 : ResponseEntity.ok(ticks);
     }
 
-    /**
-     * Subscribe to real-time time-and-sales for {@code symbol}.
-     * Returns 503 if not connected to TWS.
-     */
+    @Operation(summary = "Subscribe to real-time tape for a symbol",
+            description = "Starts IBKR time-and-sales streaming. Returns 503 if not connected to TWS.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subscription started"),
+            @ApiResponse(responseCode = "503", description = "Not connected to IBKR TWS")
+    })
     @PostMapping("/subscribe/{symbol}")
-    public ResponseEntity<String> subscribe(@PathVariable String symbol) {
+    public ResponseEntity<String> subscribe(
+            @Parameter(description = "Ticker symbol") @PathVariable String symbol) {
         if (!tapeClient.isConnected()) {
             return ResponseEntity.status(503).body("Not connected to IBKR TWS — check ibkr.enabled and that TWS is running");
         }
@@ -52,22 +53,23 @@ public class IbkrTapeController {
         return ResponseEntity.ok("Subscribed to " + symbol.toUpperCase());
     }
 
-    /**
-     * Unsubscribe from a symbol and clear its tick buffer.
-     */
+    @Operation(summary = "Unsubscribe from tape and clear buffer")
+    @ApiResponse(responseCode = "200", description = "Unsubscribed and buffer cleared")
     @DeleteMapping("/subscribe/{symbol}")
-    public ResponseEntity<String> unsubscribe(@PathVariable String symbol) {
+    public ResponseEntity<String> unsubscribe(
+            @Parameter(description = "Ticker symbol") @PathVariable String symbol) {
         tapeClient.unsubscribe(symbol.toUpperCase());
         return ResponseEntity.ok("Unsubscribed from " + symbol.toUpperCase());
     }
 
-    /** All symbols currently streaming. */
+    @Operation(summary = "List all subscribed symbols")
     @GetMapping("/symbols")
     public Set<String> subscribedSymbols() {
         return tapeClient.subscribedSymbols();
     }
 
-    /** Quick health-check for the TWS connection. */
+    @Operation(summary = "IBKR connection status",
+            description = "Returns connection state plus per-symbol tick counts.")
     @GetMapping("/status")
     public Map<String, Object> status() {
         return Map.of(

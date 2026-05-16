@@ -218,7 +218,8 @@ public class MomentumStrengthScanner implements PatternScanner {
                 bar.endTimestampMs().toInstant().toEpochMilli(),
                 state.getPreMarketHigh(),
                 state.getPreMarketLow(),
-                null
+                null,
+                false
         ));
     }
 

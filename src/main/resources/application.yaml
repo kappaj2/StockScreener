@@ -91,15 +91,11 @@ massive:
   symbols: AM.*
   cron:
     start: "0 0 4 * * MON-FRI"
-    stop: "0 0 20 * * MON-FRI"
     zone: "America/New_York"
-  window:
-    start: "04:00"
-    stop: "20:00"
   retry:
     initial-delay-seconds: 5
-    max-delay-seconds: 60
-    max-attempts: 0   # 0 = unlimited retries within the trading window
+    max-delay-seconds: 300  # 5-min cap suits 24/7 operation (prevents log spam on prolonged outages)
+    max-attempts: 0         # unlimited retries
 
 # Filter stocks before we show interest.
 # Price: $2–$150. Volume: per-bar >= 500, running daily avg per minute >= 20 000.
@@ -169,9 +165,18 @@ ibkr:
   tape:
     max-ticks: 500               # rolling window depth per symbol
 
+stockwatch:
+  valid-days: 60   # how long a symbol stays on the watch list before expiring
+
 ollama:
   breakout:
     min-confidence: 70   # minimum Ollama confidence % to emit a signal
+
+springdoc:
+  paths-to-match: /api/**
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
 
 logging:
   level:
