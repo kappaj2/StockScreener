@@ -34,6 +34,17 @@ public class SymbolStateRedisStore {
         }
     }
 
+    public Optional<SymbolStateSnapshot> loadSnapshot(String symbol) {
+        try {
+            String json = redis.opsForValue().get(KEY_PREFIX + symbol);
+            if (json == null) return Optional.empty();
+            return Optional.of(objectMapper.readValue(json, SymbolStateSnapshot.class));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to load snapshot from Redis", symbol, e);
+            return Optional.empty();
+        }
+    }
+
     public Optional<SymbolState> load(String symbol) {
         try {
             String json = redis.opsForValue().get(KEY_PREFIX + symbol);
