@@ -12,7 +12,6 @@ import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
 import za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository;
 import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
-import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
 import za.co.sfh.stocklistener.processor.stockwatch.HighWatchStockService;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
@@ -35,7 +34,6 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final ObjectMapper objectMapper;
     private final SignalStore signalStore;
     private final List<PatternScanner> scanners;
-    private final SymbolStateRedisStore redisStore;
     private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
     private final MinuteBarRepository minuteBarRepository;
     private final HighWatchStockService highWatchStockService;
@@ -100,12 +98,10 @@ public class AggregateMinuteBarHandler implements MessageHandler {
 
         persistMinuteBarAsync(bar);
 
-        var state = stateMap.computeIfAbsent(bar.symbol(),
-                s -> redisStore.load(s).orElseGet(SymbolState::new));
+        var state = stateMap.computeIfAbsent(bar.symbol(), s -> new SymbolState());
 
         state.addBar(bar);
 
-        redisStore.save(state);
         log.debug("Statemap size: {}", stateMap.size());
 
         for (PatternScanner scanner : scanners) {

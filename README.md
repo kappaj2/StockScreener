@@ -86,6 +86,46 @@ AggregateMinuteBarHandler
 
 ---
 
+## High Tight Flag (HTF) Scanner
+
+Implements Kristjan Kullamagi's modern variation of O'Neil's High Tight Flag, detected against daily bar history from the `daily_bar_summary` table.
+
+### Detection Logic
+
+| Phase | Rule |
+|---|---|
+| **Pole** | Highest intraday high across the 60-day lookback window |
+| **Advance** | ≥ 30% gain over the 20 trading days leading to that high |
+| **Flag** | All trading days after the pole top |
+| **Pullback** | Deepest close during the flag ≤ 25% below the pole high |
+| **MA surf** | Latest close must be above the 20-day SMA |
+| **Flag break** | Any flag day that closes below the 20-day SMA on heavy volume (≥ 1.5× avg) invalidates the setup |
+| **Minimum flag** | At least 5 trading days of consolidation required |
+| **Breakout trigger** | Minute-bar close > flag high AND volume > 1.5× session avg minute-bar volume |
+| **Stop** | Flag low — lowest close recorded during the consolidation (Kullamagi's rule) |
+| **Target** | Entry × 1.15 (configurable via `patterns.htf.target`) |
+
+### Caching
+
+Daily bar data is queried once per symbol per trading day and cached in memory. Subsequent minute bars for the same symbol reuse the cached result at zero DB cost.
+
+### Configuration (`application.yaml`)
+
+```yaml
+patterns:
+  htf:
+    target: 1.15                 # price target multiplier (entry × target)
+    storeSignal: false           # enable once validated in live session
+    min-advance-pct: 30.0        # minimum % advance leading to the pole top
+    max-pullback-pct: 25.0       # maximum pullback from pole high during the flag
+    lookback-days: 60            # trading days of history to examine
+    ma-period: 20                # SMA period for the "surfing the MA" check
+    min-consolidation-days: 5    # minimum flag days before a breakout can trigger
+    volume-multiplier: 1.5       # minute-bar volume must exceed avgVolume × this
+```
+
+---
+
 ## Tech Stack
 
 | Component | Technology |

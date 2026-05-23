@@ -12,7 +12,10 @@ public enum PatternType {
     INVERTED_VEE("IV"),
     MOMENTUM_VERY_HIGH("MVH"),
     MOMENTUM_HIGH("MH"),
-    HIGH_WATCH("HW");
+    HIGH_WATCH("HW"),
+    HIGH_TIGHT_FLAG("HTF"),
+    GAP_AND_RUN("GAR"),
+    GRINDING_MOMENTUM("GM");
 
     private final String code;
 }

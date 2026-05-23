@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Serializable snapshot of {@link SymbolState} stored in Redis.
+ * Serializable snapshot of {@link SymbolState}\.
  * Contains only the scalar accumulators and the last N candles —
  * enough to resume all indicators after a restart without replaying history.
  */

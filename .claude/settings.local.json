@@ -26,7 +26,8 @@
       "mcp__idea__search_regex",
       "mcp__idea__read_file",
       "Bash(mkdir -p src/main/resources/db/migration/schema src/main/resources/db/migration/procedures)",
-      "Bash(cp src/main/resources/db.migration.schema/*.sql src/main/resources/db/migration/schema/)"
+      "Bash(cp src/main/resources/db.migration.schema/*.sql src/main/resources/db/migration/schema/)",
+      "Bash(./mvnw test *)"
     ]
   }
 }

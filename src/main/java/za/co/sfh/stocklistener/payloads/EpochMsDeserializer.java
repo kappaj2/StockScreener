@@ -22,7 +22,7 @@ public class EpochMsDeserializer extends StdDeserializer<ZonedDateTime> {
 
     @Override
     public ZonedDateTime deserialize(JsonParser p, DeserializationContext ctx) throws JacksonException {
-        // Accept both epoch-ms number (Polygon WebSocket) and human-readable string (serialized REST/Redis form)
+        // Accept both epoch-ms number (Polygon WebSocket) and human-readable string (serialized REST form)
         if (p.currentToken() == JsonToken.VALUE_NUMBER_INT) {
             return Instant.ofEpochMilli(p.getLongValue()).atZone(ET);
         }

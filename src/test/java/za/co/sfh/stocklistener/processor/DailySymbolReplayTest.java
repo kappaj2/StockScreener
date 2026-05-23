@@ -40,14 +40,14 @@ import java.util.Optional;
  *
  * The test reads src/test/resources/fixtures/bars-{TEST_DATE}.jsonl,
  * filters to TEST_SYMBOL only, and drives SymbolState + every PatternScanner
- * synchronously — no Spring context, no async queue, no Redis.
+ * synchronously — no Spring context, no async queue.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 class DailySymbolReplayTest {
 
     // ── Configuration ──────────────────────────────────────────────────────────
-    private static final String TEST_DATE   = "2026-04-16";   // yyyy-MM-dd
-    private static final String TEST_SYMBOL = "WNW";
+    private static final String TEST_DATE   = "2026-05-22";   // yyyy-MM-dd
+    private static final String TEST_SYMBOL = "LODE";
 
     // Filters (match application.yaml)
     private static final double MIN_CLOSE  = 0.10;

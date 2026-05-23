@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Entity
 @IdClass(DailyBarSummaryId.class)
 @Table(name = "daily_bar_summary", indexes = {
-        @Index(name = "idx_daily_summary_trade_date", columnList = "trade_date")
+        @Index(name = "idx_daily_summary_trade_date_symbol", columnList = "trade_date, symbol")
 })
 @Getter
 @Builder

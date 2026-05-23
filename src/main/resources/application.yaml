@@ -7,13 +7,6 @@ spring:
     virtual:
       enabled: true
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
-      timeout: 200ms
-      connect-timeout: 200ms
-
   datasource:
     url: jdbc:mariadb://${DB_HOST:localhost}:3306/stock
     username: stock
@@ -98,12 +91,13 @@ massive:
     max-attempts: 0         # unlimited retries
 
 # Filter stocks before we show interest.
-# Price: $2–$150. Volume: per-bar >= 500, running daily avg per minute >= 20 000.
+# Price: $2–$250. Volume: per-bar >= 100 (low to capture pre-market context bars),
+# running daily avg per minute >= 10 000.
 filter:
   min-close: 2.0
   max-close: 250.0
-  min-volume: 500
-  min-avg-daily-volume: 20000
+  min-volume: 100
+  min-avg-daily-volume: 10000
 
 patterns:
   breakout:
@@ -118,6 +112,29 @@ patterns:
     stop: 0.97
     target: 1.06
     storeSignal: false
+  htf:
+    target: 1.15                 # price target multiplier (entry × target)
+    storeSignal: false           # disabled until validated in live session
+    min-advance-pct: 30.0        # minimum % advance leading to the pole top (over ~20 trading days)
+    max-pullback-pct: 25.0       # maximum pullback from pole high during the flag
+    lookback-days: 60            # trading days of daily history to examine
+    ma-period: 20                # SMA period for the "surfing the MA" check
+    min-consolidation-days: 5    # minimum flag days before a breakout can trigger
+    volume-multiplier: 1.5       # minute-bar volume must exceed avgVolume × this on breakout
+  grinding-momentum:
+    stop: 0.97                   # stop-loss multiplier (entry × stop)
+    target: 1.05                 # price target multiplier (entry × target)
+    storeSignal: true
+    lookback-bars: 5             # window size in bars (current bar is the last bar in the window)
+    min-advance-pct: 1.5         # minimum net % advance from base close to current close
+    min-higher-closes: 3         # minimum bars in window where close > previous bar's close
+    max-single-drop-pct: 2.0     # maximum single-bar drop % (open → close) allowed in the window
+  gap-and-run:
+    stop: 0.92                    # stop-loss multiplier (entry × stop)
+    target: 1.10                  # price target multiplier (entry × target)
+    storeSignal: true
+    min-gap-pct: 0.5              # gap up must be at least this % above the previous bar's close
+    body-factor: 1.5              # current bar body must be ≥ this × previous bar's range
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:

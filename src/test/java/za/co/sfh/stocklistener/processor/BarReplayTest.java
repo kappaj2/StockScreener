@@ -58,9 +58,6 @@ class BarReplayTest {
         setField(breakoutScanner, "stopMultiplier", 0.9);
         setField(breakoutScanner, "targetMultiplier", 1.05);
 
-        za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore redisStore =
-                mock(za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore.class);
-
         za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle dontDiddleInTheMiddle =
                 mock(za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle.class);
 
@@ -72,7 +69,7 @@ class BarReplayTest {
         org.mockito.Mockito.when(highWatchStockService.findBySymbol(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(java.util.Optional.empty());
 
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), redisStore, dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService);
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());
