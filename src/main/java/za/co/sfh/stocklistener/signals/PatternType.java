@@ -13,7 +13,9 @@ public enum PatternType {
     MOMENTUM_VERY_HIGH("MVH"),
     MOMENTUM_HIGH("MH"),
     HIGH_WATCH("HW"),
-    HIGH_TIGHT_FLAG("HTF");
+    HIGH_TIGHT_FLAG("HTF"),
+    GAP_AND_RUN("GAR"),
+    GRINDING_MOMENTUM("GM");
 
     private final String code;
 }

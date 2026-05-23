@@ -43,10 +43,10 @@ public class BreakoutPatternScanner implements PatternScanner {
         double range = bar.high() - bar.low();
         log.debug("Breakout range check [symbol: {}; range: {}; close: {}]", bar.symbol(), range, bar.close());
 
-        if (range < 0.05 * bar.close()) return Optional.empty();
+        if (range <= 0) return Optional.empty();
 
         double previousRange = previousBar.high() - previousBar.low();
-        if (previousRange < 0.05 * previousBar.close()) return Optional.empty();
+        if (previousRange <= 0) return Optional.empty();
 
         boolean confirmed = range > 2 * state.getAvgRange() &&
                 bar.volume() > 2 * state.getAvgVolume() &&

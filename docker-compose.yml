@@ -1,17 +1,6 @@
 services:
 
   # ── Infrastructure ────────────────────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    # Port not exposed to the host — containers communicate on the internal network.
-    # Remove this comment and add "ports: - 6379:6379" if you need host access.
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   mariadb:
     image: mariadb:11
     restart: unless-stopped
@@ -39,17 +28,12 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      redis:
-        condition: service_healthy
       mariadb:
         condition: service_healthy
     ports:
       - "8085:8000"
     environment:
       MASSIVE_API_KEY: ${MASSIVE_API_KEY}
-      REDIS_HOST: redis
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
       DB_HOST: mariadb
       SPRING_PROFILES_ACTIVE: record
       RECORDER_OUTPUT_DIR: /fixtures
@@ -74,17 +58,12 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      redis:
-        condition: service_healthy
       mariadb:
         condition: service_healthy
     ports:
       - "8085:8000"
     environment:
       MASSIVE_API_KEY: ${MASSIVE_API_KEY}
-      REDIS_HOST: redis
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
       DB_HOST: mariadb
       SPRING_AI_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_HOST: host.docker.internal

@@ -5,12 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import za.co.sfh.stocklistener.DatabaseContainerTest;
-import za.co.sfh.stocklistener.processor.states.SymbolStateRedisStore;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
@@ -21,12 +19,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 /**
  * Integration test that runs the full Spring context and feeds a fixture file
@@ -45,20 +39,14 @@ class DailySymbolReplayIntegrationTest implements DatabaseContainerTest {
     @Autowired
     private ApplicationContext applicationContext;
 
-    @MockitoBean
-    private SymbolStateRedisStore redisStore;
-
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String TEST_DATE = "2026-04-16";
-    private static final String TEST_SYMBOL = "MYSE";
+    private static final String TEST_DATE = "2026-05-22";
+    private static final String TEST_SYMBOL = "LODE";
 
     @Test
     void replayFixtureThroughSpringContext() throws Exception {
-        // Mock Redis store to always return empty (start fresh for each symbol)
-        when(redisStore.load(anyString())).thenReturn(Optional.empty());
-
         String fixture = "fixtures/bars-" + TEST_DATE + ".jsonl";
         URL resource = getClass().getClassLoader().getResource(fixture);
         if (resource == null) {
