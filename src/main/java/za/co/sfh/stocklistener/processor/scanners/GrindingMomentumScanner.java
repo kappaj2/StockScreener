@@ -29,7 +29,7 @@ public class GrindingMomentumScanner implements PatternScanner {
     @Value("${patterns.grinding-momentum.lookback-bars:5}")
     private int lookbackBars;
 
-    @Value("${patterns.grinding-momentum.min-advance-pct:1.5}")
+    @Value("${patterns.grinding-momentum.min-advance-pct:6.0}")
     private double minAdvancePct;
 
     @Value("${patterns.grinding-momentum.min-higher-closes:3}")
