@@ -115,7 +115,7 @@ public class HighTightFlagScanner implements PatternScanner {
                 dailyRepo.findBySymbolAndTradeDateBetweenOrderByTradeDateAsc(symbol, fromDate, today.minusDays(1));
 
         if (bars.size() < maPeriod + minConsolidationDays) {
-            return HtfDailyState.invalid(today, "insufficient history: " + bars.size() + " days");
+            return HtfDailyState.invalid(today, "insufficient history: " + bars.size() + " days - minimum "+maPeriod);
         }
 
         // --- Pole: highest intraday high across the entire lookback ---
