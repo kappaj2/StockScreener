@@ -82,7 +82,19 @@ public class SignalView extends VerticalLayout {
                 .set("margin-left", "auto")
                 .set("letter-spacing", "1px");
 
-        header.add(rocket, title, liveIndicator);
+        Button clearAllButton = new Button("Clear All");
+        clearAllButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        clearAllButton.addClickListener(e -> {
+            signalStore.ackAll();
+            refreshGrid();
+        });
+
+        Button institutionsBtn = new Button("🏦 Institutional");
+        institutionsBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        institutionsBtn.getStyle().set("color", "#8b949e");
+        institutionsBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("institutions")));
+
+        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn);
 
         // Grid container
         Div gridWrapper = new Div();

@@ -25,6 +25,9 @@ public class BreakoutPatternScanner implements PatternScanner {
     @Value("${patterns.breakout.storeSignal:false}")
     private boolean storeSignal;
 
+    @Value("${patterns.breakout.min-two-bar-move:0.03}")
+    private double minTwoBarMove;
+
     @Override
     public boolean shouldStore() {
         return storeSignal;
@@ -57,6 +60,15 @@ public class BreakoutPatternScanner implements PatternScanner {
                 bar.close(), state.getAvgClose(), confirmed);
 
         if (!confirmed) return Optional.empty();
+
+        // Require the two-bar move (prev open → current close) to be at least minTwoBarMove %
+        // to filter out tight ranging action that looks like a breakout but goes nowhere.
+        double twoBarMove = (bar.close() - previousBar.open()) / previousBar.open();
+        if (twoBarMove < minTwoBarMove) {
+            log.debug("Breakout rejected — two-bar move {}% < minimum {}% [symbol: {}]",
+                    String.format("%.2f", twoBarMove * 100), String.format("%.2f", minTwoBarMove * 100), bar.symbol());
+            return Optional.empty();
+        }
 
         log.info("Breakout above average [symbol: {}; close: {}; avgClose: {}; txTime: {}]",
                 bar.symbol(), bar.close(), state.getAvgClose(), bar.endTimestampMs());

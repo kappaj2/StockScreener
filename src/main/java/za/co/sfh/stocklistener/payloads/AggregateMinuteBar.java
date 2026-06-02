@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
  */
 public record AggregateMinuteBar(
         @JsonProperty("ev") String ev,       // event type, always "AM"
-        @JsonProperty("sym") String symbol,   // ticker symbol, e.g. "AAPL"
+        @JsonProperty("sym") String symbol,  // ticker symbol, e.g. "AAPL"
         @JsonProperty("v") long volume,   // tick volume for this bar
         @JsonProperty("av") long accumulatedVolume, // accumulated volume since market open
         @JsonProperty("op") double officialOpen,      // today's official opening price
@@ -33,6 +33,12 @@ public record AggregateMinuteBar(
         @JsonDeserialize(using = EpochMsDeserializer.class)
         @JsonProperty("e") ZonedDateTime endTimestampMs     // bar end (ET)
 ) {
+    // Polygon occasionally sends mixed-case tickers (e.g. "TpC" vs "TPC") which causes
+    // JPA composite-key identity mismatches and stateMap fragmentation.
+    public AggregateMinuteBar {
+        symbol = symbol != null ? symbol.toUpperCase() : null;
+    }
+
     // ── Structural candle metrics ─────────────────────────────────────────────
 
     /** Full range of the bar: H - L */

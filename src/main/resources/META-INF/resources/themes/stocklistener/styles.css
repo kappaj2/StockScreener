@@ -12,3 +12,14 @@ html {
 :host, html {
   --lumo-base-color: #0d1117;
 }
+
+/* Tooltip: use a light text colour so it is readable against the dark overlay */
+vaadin-tooltip-overlay::part(overlay) {
+  color: #e6edf3;
+  background: #1c2128;
+  border: 1px solid #30363d;
+}
+
+vaadin-tooltip-overlay {
+  --lumo-body-text-color: #e6edf3;
+}
