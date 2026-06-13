@@ -104,6 +104,7 @@ patterns:
     stop: 0.9
     target: 1.05
     storeSignal: true
+    min-two-bar-move: 0.03   # both candles combined (prev open → current close) must move ≥ this %
   invertedV:
     stop: -1.35
     target: 2.0
@@ -126,7 +127,7 @@ patterns:
     target: 1.05                 # price target multiplier (entry × target)
     storeSignal: true
     lookback-bars: 5             # window size in bars (current bar is the last bar in the window)
-    min-advance-pct: 1.5         # minimum net % advance from base close to current close
+    min-advance-pct: 6.0         # minimum net % advance from base close to current close
     min-higher-closes: 3         # minimum bars in window where close > previous bar's close
     max-single-drop-pct: 2.0     # maximum single-bar drop % (open → close) allowed in the window
   gap-and-run:
@@ -135,6 +136,15 @@ patterns:
     storeSignal: true
     min-gap-pct: 0.5              # gap up must be at least this % above the previous bar's close
     body-factor: 1.5              # current bar body must be ≥ this × previous bar's range
+  alpha:
+    target: 1.20                 # price target multiplier (entry × target)
+    storeSignal: false           # disabled until validated in live session
+    min-advance-pct: 40.0        # minimum % advance from base to peak (the steep climb)
+    max-climb-days: 60           # maximum trading days the climb phase may span
+    lookback-days: 180           # total daily history window — needs to cover climb + consolidation (~9 months)
+    min-bottoms: 3               # minimum sequential higher swing lows required
+    swing-window: 3              # half-width in bars for swing-low detection (bars on each side)
+    volume-multiplier: 1.5       # intraday breakout bar volume must exceed avgVolume × this
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:
@@ -181,6 +191,14 @@ ibkr:
                                  # e.g. "AAPL,TSLA,NVDA"  (leave blank to subscribe via REST)
   tape:
     max-ticks: 500               # rolling window depth per symbol
+
+scoring:
+  cron:
+    daily-score: "0 30 20 * * MON-FRI"   # 8:30 PM ET weekdays — after daily_bar_summary cron
+  backfill:
+    enabled: false
+    # from: "2026-01-01"
+    # to: "2026-05-31"
 
 stockwatch:
   valid-days: 60   # how long a symbol stays on the watch list before expiring

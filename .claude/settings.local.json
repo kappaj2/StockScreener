@@ -27,7 +27,9 @@
       "mcp__idea__read_file",
       "Bash(mkdir -p src/main/resources/db/migration/schema src/main/resources/db/migration/procedures)",
       "Bash(cp src/main/resources/db.migration.schema/*.sql src/main/resources/db/migration/schema/)",
-      "Bash(./mvnw test *)"
+      "Bash(./mvnw test *)",
+      "Bash(mysql *)",
+      "Bash(javap -classpath /Users/andrekapp/.m2/repository/com/vaadin/vaadin-grid-flow/25.0.8/vaadin-grid-flow-25.0.8.jar com.vaadin.flow.component.grid.Grid)"
     ]
   }
 }

@@ -18,6 +18,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
+import za.co.sfh.stocklistener.signals.PatternType;
 import za.co.sfh.stocklistener.signals.SignalStore;
 
 import java.time.Instant;
@@ -82,7 +83,19 @@ public class SignalView extends VerticalLayout {
                 .set("margin-left", "auto")
                 .set("letter-spacing", "1px");
 
-        header.add(rocket, title, liveIndicator);
+        Button clearAllButton = new Button("Clear All");
+        clearAllButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        clearAllButton.addClickListener(e -> {
+            signalStore.ackAll();
+            refreshGrid();
+        });
+
+        Button institutionsBtn = new Button("🏦 Institutional");
+        institutionsBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        institutionsBtn.getStyle().set("color", "#8b949e");
+        institutionsBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("institutions")));
+
+        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn);
 
         // Grid container
         Div gridWrapper = new Div();
@@ -154,6 +167,9 @@ public class SignalView extends VerticalLayout {
             return remove;
         }).setHeader("").setAutoWidth(true).setFlexGrow(0);
 
+        grid.setPartNameGenerator(signal ->
+                signal.pattern() == PatternType.ALPHA_PATTERN ? "alpha-signal" : null);
+
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_NO_BORDER);
         grid.getElement().setAttribute("theme", "dark");
 
@@ -170,6 +186,20 @@ public class SignalView extends VerticalLayout {
         refreshGrid();
         attachEvent.getUI().setPollInterval(1000);
         pollRegistration = attachEvent.getUI().addPollListener(event -> refreshGrid());
+        injectAlphaRowStyles();
+    }
+
+    private void injectAlphaRowStyles() {
+        getElement().executeJs(
+                "var grid = $0;" +
+                "if (!grid._alphaStyleInjected && grid.shadowRoot) {" +
+                "  var s = document.createElement('style');" +
+                "  s.textContent = 'tr[part~=\"alpha-signal\"] td { background-color: rgba(255, 165, 0, 0.18) !important; color: #ffa500 !important; } tr[part~=\"alpha-signal\"]:hover td { background-color: rgba(255, 165, 0, 0.28) !important; }';" +
+                "  grid.shadowRoot.appendChild(s);" +
+                "  grid._alphaStyleInjected = true;" +
+                "}",
+                grid.getElement()
+        );
     }
 
     @Override

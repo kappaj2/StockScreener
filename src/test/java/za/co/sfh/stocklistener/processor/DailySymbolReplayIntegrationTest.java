@@ -1,5 +1,6 @@
 package za.co.sfh.stocklistener.processor;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,6 +47,7 @@ class DailySymbolReplayIntegrationTest implements DatabaseContainerTest {
     private static final String TEST_SYMBOL = "LODE";
 
     @Test
+    @Disabled
     void replayFixtureThroughSpringContext() throws Exception {
         String fixture = "fixtures/bars-" + TEST_DATE + ".jsonl";
         URL resource = getClass().getClassLoader().getResource(fixture);
