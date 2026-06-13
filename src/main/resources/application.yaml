@@ -136,6 +136,15 @@ patterns:
     storeSignal: true
     min-gap-pct: 0.5              # gap up must be at least this % above the previous bar's close
     body-factor: 1.5              # current bar body must be ≥ this × previous bar's range
+  alpha:
+    target: 1.20                 # price target multiplier (entry × target)
+    storeSignal: false           # disabled until validated in live session
+    min-advance-pct: 40.0        # minimum % advance from base to peak (the steep climb)
+    max-climb-days: 60           # maximum trading days the climb phase may span
+    lookback-days: 180           # total daily history window — needs to cover climb + consolidation (~9 months)
+    min-bottoms: 3               # minimum sequential higher swing lows required
+    swing-window: 3              # half-width in bars for swing-low detection (bars on each side)
+    volume-multiplier: 1.5       # intraday breakout bar volume must exceed avgVolume × this
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:

@@ -1,7 +1,10 @@
 package za.co.sfh.stocklistener.signals;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import za.co.sfh.stocklistener.persistence.entities.SignalHistoryEntity;
+import za.co.sfh.stocklistener.persistence.repositories.SignalHistoryRepository;
 
 import java.util.Comparator;
 import java.util.List;
@@ -13,20 +16,37 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Thread-safe: the Ollama async callbacks write to it from virtual threads while
  * the HTTP layer reads from it on the Tomcat thread pool.
+ *
+ * Every signal added via {@link #add(BreakoutSignal)} is also persisted to the
+ * {@code signal_history} table so that signals survive an app restart or the
+ * in-memory queue being cleared. History is append-only and is not purged.
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SignalStore {
 
     private final ConcurrentHashMap<String, BreakoutSignal> pending = new ConcurrentHashMap<>();
 
+    private final SignalHistoryRepository signalHistoryRepository;
+
     /**
-     * Adds a confirmed signal to the pending store.
+     * Adds a confirmed signal to the pending store and records it in the
+     * persistent signal history.
      */
     public void add(BreakoutSignal signal) {
         pending.put(signal.id(), signal);
         log.info("📥 Signal queued for TradingView alert: [{}] entry={} confidence={}%",
                 signal.symbol(), signal.entry(), signal.confidence());
+        persistHistory(signal);
+    }
+
+    private void persistHistory(BreakoutSignal signal) {
+        try {
+            signalHistoryRepository.save(SignalHistoryEntity.from(signal));
+        } catch (Exception e) {
+            log.error("Failed to persist signal history for [{}] id={}", signal.symbol(), signal.id(), e);
+        }
     }
 
     /**
