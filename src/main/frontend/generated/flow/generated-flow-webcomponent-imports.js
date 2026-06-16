@@ -31,14 +31,14 @@ import 'react';
 
 const loadOnDemand = (key) => {
   const pending = [];
-  if (key === 'a973d6cd1a29f0338976d376fa69f63ffa2174afdff0365b38a882c7bcc74a0e') {
-    pending.push(import('./chunks/chunk-d89d2bce262c8840106b8058b4a9fc1ebcf6bd159b26e3337cb20b85cd98bb02.js'));
-  }
   if (key === '39a93fa6278027526f3f2e11a1311feb0f2e4de9e629783a6c044066f82246ec') {
     pending.push(import('./chunks/chunk-2328e231a442b3aa3dda38f2b5f8efbd3c720aaa4ae6eab605f4620dd2e8a065.js'));
   }
   if (key === 'b2aad0b140a46666aa7c457c8117ce70177d73ce05cc15e7336e6d239eba661d') {
     pending.push(import('./chunks/chunk-9d874984cb95efec54903ebbee1ee9e8707fe46e998a77a93b1a55febb7cc793.js'));
+  }
+  if (key === 'a973d6cd1a29f0338976d376fa69f63ffa2174afdff0365b38a882c7bcc74a0e') {
+    pending.push(import('./chunks/chunk-d89d2bce262c8840106b8058b4a9fc1ebcf6bd159b26e3337cb20b85cd98bb02.js'));
   }
   return Promise.all(pending);
 }

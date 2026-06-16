@@ -32,6 +32,18 @@ public class GapAndRunPatternScanner implements PatternScanner {
     @Value("${patterns.gap-and-run.storeSignal:true}")
     private boolean storeSignal;
 
+    // Minimum total session volume traded — filters illiquid stocks where 2× avg is meaningless
+    @Value("${patterns.gap-and-run.min-cumulative-volume:500000}")
+    private long minCumulativeVolume;
+
+    // Sustained volume: look back this many bars and require at least sustainedVolumeMinBars of them
+    // to have volume >= avgVolume — catches "only 1-2 spike" patterns
+    @Value("${patterns.gap-and-run.sustained-volume-lookback:5}")
+    private int sustainedVolumeLookback;
+
+    @Value("${patterns.gap-and-run.sustained-volume-min-bars:2}")
+    private int sustainedVolumeMinBars;
+
     @Override
     public boolean shouldStore() {
         return storeSignal;
@@ -63,9 +75,28 @@ public class GapAndRunPatternScanner implements PatternScanner {
 
         if (bar.volume() <= 2 * state.getAvgVolume()) return Optional.empty();  // volume confirmation
 
+        // Reject illiquid stocks: total session volume must clear a minimum floor
+        if (state.getCumulativeVolume() < minCumulativeVolume) {
+            log.debug("Gap and Run rejected — cumulative session volume too low [symbol: {}; cumulativeVolume: {}; required: {}]",
+                    bar.symbol(), state.getCumulativeVolume(), minCumulativeVolume);
+            return Optional.empty();
+        }
+
+        // Reject "one or two spike" patterns: require sustained elevated volume over recent bars
+        int lookback = Math.min(sustainedVolumeLookback, arr.length - 1); // exclude trigger bar (last)
+        int elevatedCount = 0;
+        for (int i = arr.length - 1 - lookback; i < arr.length - 1; i++) {
+            if (arr[i].volume() >= state.getAvgVolume()) elevatedCount++;
+        }
+        if (elevatedCount < sustainedVolumeMinBars) {
+            log.debug("Gap and Run rejected — volume not sustained [symbol: {}; elevatedBars: {}/{}; required: {}]",
+                    bar.symbol(), elevatedCount, lookback, sustainedVolumeMinBars);
+            return Optional.empty();
+        }
+
         double ratio = body / prevRange;
-        log.info("Gap and Run [symbol: {}; gapPct: {}; bodyRatio: {}; volume: {}; avgVolume: {}]",
-                bar.symbol(), gapPct, ratio, bar.volume(), state.getAvgVolume());
+        log.info("Gap and Run [symbol: {}; gapPct: {}; bodyRatio: {}; volume: {}; avgVolume: {}; cumulativeVolume: {}; sustainedBars: {}/{}]",
+                bar.symbol(), gapPct, ratio, bar.volume(), state.getAvgVolume(), state.getCumulativeVolume(), elevatedCount, lookback);
 
         return Optional.of(new BreakoutSignal(
                 UUID.randomUUID().toString(),

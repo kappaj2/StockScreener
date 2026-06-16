@@ -47,6 +47,22 @@ public class GrindingMomentumScanner implements PatternScanner {
     @Value("${patterns.grinding-momentum.storeSignal:true}")
     private boolean storeSignal;
 
+    // Only fire during regular market hours (9:30–16:00 ET) — pre-market grinds are noise
+    @Value("${patterns.grinding-momentum.require-market-hours:true}")
+    private boolean requireMarketHours;
+
+    // Trigger bar volume must exceed avgVolume × this multiplier
+    @Value("${patterns.grinding-momentum.min-volume-multiplier:1.5}")
+    private double minVolumeMultiplier;
+
+    // Minimum total session volume — rejects illiquid tickers
+    @Value("${patterns.grinding-momentum.min-cumulative-volume:200000}")
+    private long minCumulativeVolume;
+
+    // Average volume across the lookback window must be >= avgVolume × this fraction (0 = disabled)
+    @Value("${patterns.grinding-momentum.min-window-avg-volume-ratio:0.5}")
+    private double minWindowAvgVolumeRatio;
+
     @Override
     public boolean shouldStore() {
         return storeSignal;
@@ -56,6 +72,26 @@ public class GrindingMomentumScanner implements PatternScanner {
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
         // Need 1 base bar + lookbackBars window bars (current bar is the last window bar)
         if (state.getCandles().size() < lookbackBars + 1) return Optional.empty();
+
+        // Reject pre-market / after-hours bars
+        if (requireMarketHours && state.isOutsideNormalHours(bar.startTimestampMs())) {
+            log.debug("Grinding momentum rejected — outside market hours [symbol: {}]", bar.symbol());
+            return Optional.empty();
+        }
+
+        // Reject illiquid tickers
+        if (state.getCumulativeVolume() < minCumulativeVolume) {
+            log.debug("Grinding momentum rejected — cumulative volume too low [symbol: {}; cumulativeVolume: {}; required: {}]",
+                    bar.symbol(), state.getCumulativeVolume(), minCumulativeVolume);
+            return Optional.empty();
+        }
+
+        // Trigger bar must have meaningful volume
+        if (minVolumeMultiplier > 0 && bar.volume() < minVolumeMultiplier * state.getAvgVolume()) {
+            log.debug("Grinding momentum rejected — trigger bar volume too low [symbol: {}; volume: {}; required: {}×avg={}]",
+                    bar.symbol(), bar.volume(), minVolumeMultiplier, minVolumeMultiplier * state.getAvgVolume());
+            return Optional.empty();
+        }
 
         AggregateMinuteBar[] arr = state.getCandles().toArray(new AggregateMinuteBar[0]);
         int n = arr.length;
@@ -100,8 +136,22 @@ public class GrindingMomentumScanner implements PatternScanner {
         // 4. Current close must be above the session average close
         if (bar.close() <= state.getAvgClose()) return Optional.empty();
 
-        log.info("Grinding momentum [symbol: {}; netAdvancePct: {}; higherCloses: {}/{}; baseClose: {}; currentClose: {}]",
-                bar.symbol(), netAdvancePct, higherCloses, lookbackBars, baseClose, bar.close());
+        // 5. Average volume across the lookback window must be sustained (not just the trigger bar)
+        if (minWindowAvgVolumeRatio > 0 && state.getAvgVolume() > 0) {
+            double windowVolumeSum = 0;
+            for (int i = n - lookbackBars; i < n; i++) {
+                windowVolumeSum += arr[i].volume();
+            }
+            double windowAvgVolume = windowVolumeSum / lookbackBars;
+            if (windowAvgVolume < minWindowAvgVolumeRatio * state.getAvgVolume()) {
+                log.debug("Grinding momentum rejected — window volume too thin [symbol: {}; windowAvgVolume: {}; required: {}×avg={}]",
+                        bar.symbol(), windowAvgVolume, minWindowAvgVolumeRatio, minWindowAvgVolumeRatio * state.getAvgVolume());
+                return Optional.empty();
+            }
+        }
+
+        log.info("Grinding momentum [symbol: {}; netAdvancePct: {}; higherCloses: {}/{}; baseClose: {}; currentClose: {}; cumulativeVolume: {}]",
+                bar.symbol(), netAdvancePct, higherCloses, lookbackBars, baseClose, bar.close(), state.getCumulativeVolume());
 
         return Optional.of(new BreakoutSignal(
                 UUID.randomUUID().toString(),
