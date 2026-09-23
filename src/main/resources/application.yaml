@@ -103,7 +103,7 @@ patterns:
   breakout:
     stop: 0.9
     target: 1.05
-    storeSignal: true
+    storeSignal: false
     min-two-bar-move: 0.03   # both candles combined (prev open → current close) must move ≥ this %
   invertedV:
     stop: -1.35
@@ -135,14 +135,17 @@ patterns:
     min-cumulative-volume: 200000 # minimum total session volume — rejects illiquid tickers
     min-window-avg-volume-ratio: 0.5  # avg volume across lookback window must be >= avgVolume × this (0 = disabled)
   gap-and-run:
-    stop: 0.92                    # stop-loss multiplier (entry × stop)
-    target: 1.10                  # price target multiplier (entry × target)
+    stop: 0.92                         # stop-loss multiplier (entry × stop)
+    target: 1.10                       # price target multiplier (entry × target)
     storeSignal: true
-    min-gap-pct: 0.5              # gap up must be at least this % above the previous bar's close
-    body-factor: 1.5              # current bar body must be ≥ this × previous bar's range
-    min-cumulative-volume: 500000 # minimum total session volume — rejects illiquid tickers (low absolute activity)
-    sustained-volume-lookback: 5  # look back this many bars before the trigger bar
-    sustained-volume-min-bars: 2  # at least this many of those bars must have volume ≥ avgVolume
+    min-gap-pct: 2.0                   # gap up must be at least this % above the previous bar's close
+    min-body-ratio: 0.5                # current bar body must be ≥ this fraction of its own range (rules out spinning tops)
+    prev-close-top-pct: 0.30           # prev bar must close in the top 30% of its range (strong base candle)
+    min-volume-multiplier: 3.0         # gap bar volume must be ≥ this × avgVolume
+    min-cumulative-volume: 500000      # minimum total session volume — rejects illiquid tickers
+    sustained-volume-lookback: 5       # look back this many bars before the trigger bar
+    sustained-volume-min-bars: 2       # at least this many of those bars must have volume ≥ avgVolume
+    require-above-premarket-high: false # set true to only fire when gap opens above the pre-market high
   alpha:
     target: 1.20                 # price target multiplier (entry × target)
     storeSignal: false           # disabled until validated in live session

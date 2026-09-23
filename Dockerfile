@@ -1,5 +1,7 @@
 FROM azul/zulu-openjdk-alpine:25.0.1
 
+RUN apk add --no-cache tzdata
+
 WORKDIR /app
 COPY target/stocklistene*.jar app.jar
 

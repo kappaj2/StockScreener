@@ -102,7 +102,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
 
         state.addBar(bar);
 
-        log.debug("Statemap size: {}", stateMap.size());
+        log.debug("Statemap size: {}; bar time ET: {}", stateMap.size(), bar.startTimestampMs());
 
         for (PatternScanner scanner : scanners) {
             Optional<BreakoutSignal> signal = scanner.scan(bar, state);
