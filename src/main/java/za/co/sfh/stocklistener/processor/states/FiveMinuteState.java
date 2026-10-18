@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import za.co.sfh.stocklistener.payloads.FiveMinuteBar;
 
+import java.time.LocalDate;
 import java.util.ArrayDeque;
 import java.util.List;
 
@@ -13,6 +14,9 @@ import java.util.List;
  * <p>Holds the last 78 completed 5-minute bars (one full regular session: 6.5 h × 12 bars/h).
  * Tracks a session VWAP, 9-period EMA of close, and running averages for range and volume.
  * All fields are reset on a new session date, consistent with {@link SymbolState} behaviour.
+ *
+ * <p>Previous-day high/low are set at the close of the regular session (16:00 ET) and are
+ * never adjusted by pre-market bars — the aggregator filters those out before they reach here.
  */
 @Slf4j
 @Getter
@@ -40,11 +44,19 @@ public final class FiveMinuteState {
     private int    totalBars;
     private double emaSeedSum;
 
+    // Previous full regular-session high/low — rolled at session boundary, never touched by pre-market
+    private double prevDayHigh    = 0;
+    private double prevDayLow     = 0;
+    private double currentDayHigh = Double.MIN_VALUE;
+    private double currentDayLow  = Double.MAX_VALUE;
+    private LocalDate sessionDate = null;
+
     public void addBar(FiveMinuteBar bar) {
         if (symbol == null) {
             symbol = bar.symbol();
         }
 
+        rollSessionIfNeeded(bar);
         updateVwap(bar);
         updateEma9(bar);
 
@@ -54,6 +66,24 @@ public final class FiveMinuteState {
         }
 
         updateAverages();
+    }
+
+    private void rollSessionIfNeeded(FiveMinuteBar bar) {
+        LocalDate barDate = bar.endTime().toLocalDate();
+        if (!barDate.equals(sessionDate)) {
+            if (currentDayHigh != Double.MIN_VALUE && currentDayLow != Double.MAX_VALUE) {
+                prevDayHigh = currentDayHigh;
+                prevDayLow  = currentDayLow;
+                log.debug("[{}] 5-min: rolled prev day range high={} low={}", symbol, prevDayHigh, prevDayLow);
+            }
+            currentDayHigh   = Double.MIN_VALUE;
+            currentDayLow    = Double.MAX_VALUE;
+            cumulativePV     = 0;
+            cumulativeVolume = 0;
+            sessionDate      = barDate;
+        }
+        if (bar.high() > currentDayHigh) currentDayHigh = bar.high();
+        if (bar.low()  < currentDayLow)  currentDayLow  = bar.low();
     }
 
     private void updateVwap(FiveMinuteBar bar) {

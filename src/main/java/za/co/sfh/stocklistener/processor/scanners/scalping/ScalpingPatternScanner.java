@@ -15,7 +15,7 @@ import java.util.Optional;
  *
  * <p>Sub-packages:
  * <ul>
- *   <li>{@code rumours} — news/rumour-driven momentum setups</li>
+ *   <li>{@code rumers} — news/rumour-driven momentum setups</li>
  *   <li>{@code smb} — small-account / small-cap scalping setups</li>
  * </ul>
  *

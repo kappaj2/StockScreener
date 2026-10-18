@@ -1,10 +1,13 @@
 package za.co.sfh.stocklistener.processor.aggregators;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 import za.co.sfh.stocklistener.payloads.FiveMinuteBar;
+import za.co.sfh.stocklistener.persistence.entities.FiveMinuteBarEntity;
+import za.co.sfh.stocklistener.persistence.repositories.FiveMinuteBarRepository;
 import za.co.sfh.stocklistener.processor.scanners.scalping.ScalpingPatternScanner;
 import za.co.sfh.stocklistener.processor.states.FiveMinuteState;
 import za.co.sfh.stocklistener.signals.SignalStore;
@@ -14,6 +17,9 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Aggregates incoming 1-minute bars into 5-minute candles, one per symbol.
@@ -38,9 +44,24 @@ public class FiveMinuteBarAggregator {
 
     private final List<ScalpingPatternScanner> scalpingScanner;
     private final SignalStore signalStore;
+    private final FiveMinuteBarRepository fiveMinuteBarRepository;
 
     private final ConcurrentHashMap<String, FiveMinBarAccumulator> accumulators = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, FiveMinuteState>       stateMap     = new ConcurrentHashMap<>();
+    private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
+
+    @PreDestroy
+    void shutdownPersistenceExecutor() {
+        persistenceExecutor.shutdown();
+        try {
+            if (!persistenceExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                persistenceExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            persistenceExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     /**
      * Offer a 1-minute bar to the aggregator.
@@ -81,6 +102,7 @@ public class FiveMinuteBarAggregator {
                     fiveMin.symbol(), fiveMin.open(), fiveMin.high(), fiveMin.low(),
                     fiveMin.close(), fiveMin.volume(), String.format("%.4f", fiveMin.vwap()));
 
+            persistFiveMinuteBarAsync(fiveMin);
             runScalpingScanners(fiveMin, state);
 
             return Optional.of(fiveMin);
@@ -91,6 +113,16 @@ public class FiveMinuteBarAggregator {
 
     public Optional<FiveMinuteState> getState(String symbol) {
         return Optional.ofNullable(stateMap.get(symbol));
+    }
+
+    private void persistFiveMinuteBarAsync(FiveMinuteBar bar) {
+        persistenceExecutor.submit(() -> {
+            try {
+                fiveMinuteBarRepository.save(FiveMinuteBarEntity.from(bar));
+            } catch (Exception e) {
+                log.warn("[{}] Failed to persist 5-minute bar", bar.symbol(), e);
+            }
+        });
     }
 
     private void runScalpingScanners(FiveMinuteBar bar, FiveMinuteState state) {

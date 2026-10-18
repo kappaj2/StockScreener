@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners.scalping.rumours;
+package za.co.sfh.stocklistener.processor.scanners.scalping.rumers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,24 +34,28 @@ import java.util.UUID;
 @Component
 public class JohnWickReversalScanner implements ScalpingPatternScanner {
 
-    @Value("${scalping.rumours.john-wick-reversal.enabled:true}")
+    @Value("${scalping.rumers.john-wick-reversal.enabled:true}")
     private boolean enabled;
 
-    @Value("${scalping.rumours.john-wick-reversal.reward-ratio:2.0}")
+    @Value("${scalping.rumers.john-wick-reversal.reward-ratio:2.0}")
     private double rewardRatio;
 
     // Setup bar must close down by at least this % (open → close) to qualify as a real sell-off
-    @Value("${scalping.rumours.john-wick-reversal.min-setup-drop-pct:0.1}")
+    @Value("${scalping.rumers.john-wick-reversal.min-setup-drop-pct:0.1}")
     private double minSetupDropPct;
 
     // John Wick bar: lower wick must be at least this multiple of the bar's body
-    @Value("${scalping.rumours.john-wick-reversal.min-wick-body-ratio:2.0}")
+    @Value("${scalping.rumers.john-wick-reversal.min-wick-body-ratio:2.0}")
     private double minWickBodyRatio;
 
     // Current bar must be green — this is the entry confirmation
     // Optionally require volume on the entry bar to exceed the John Wick bar's volume
-    @Value("${scalping.rumours.john-wick-reversal.require-volume-confirmation:false}")
+    @Value("${scalping.rumers.john-wick-reversal.require-volume-confirmation:false}")
     private boolean requireVolumeConfirmation;
+
+    // All three bar lows (setup, wick, entry) must be within this % of the wick bar's low
+    @Value("${scalping.rumers.john-wick-reversal.max-low-divergence-pct:1.5}")
+    private double maxLowDivergencePct;
 
     @Override
     public Optional<BreakoutSignal> scan(FiveMinuteBar bar, FiveMinuteState state) {
@@ -103,6 +107,18 @@ public class JohnWickReversalScanner implements ScalpingPatternScanner {
         if (requireVolumeConfirmation && entryBar.volume() < wickBar.volume()) {
             log.debug("[JWR] [{}] entry bar volume {} < wick bar volume {} — skipping",
                     bar.symbol(), entryBar.volume(), wickBar.volume());
+            return Optional.empty();
+        }
+
+        // 5. All three lows must cluster within maxLowDivergencePct% of the wick bar's low —
+        //    confirms a genuine support level rather than an isolated spike
+        double wickLow    = wickBar.low();
+        double tolerance  = wickLow * (maxLowDivergencePct / 100.0);
+        double setupDelta = Math.abs(setupBar.low() - wickLow);
+        double entryDelta = Math.abs(entryBar.low() - wickLow);
+        if (setupDelta > tolerance || entryDelta > tolerance) {
+            log.debug("[JWR] [{}] lows not clustered — setupLow={} wickLow={} entryLow={} tolerance={}",
+                    bar.symbol(), setupBar.low(), wickLow, entryBar.low(), String.format("%.4f", tolerance));
             return Optional.empty();
         }
 
