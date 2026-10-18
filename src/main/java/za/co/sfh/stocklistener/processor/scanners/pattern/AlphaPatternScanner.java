@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +73,9 @@ public class AlphaPatternScanner implements PatternScanner {
     @Value("${patterns.alpha.volume-multiplier:1.5}")
     private double volumeMultiplier;
 
+    @Value("${patterns.alpha.enabled:true}")
+    private boolean enabled;
+
     private final DailyBarSummaryRepository dailyRepo;
 
     /** Per-symbol daily cache; a stale entry (different date) is recomputed on demand. */
@@ -89,6 +92,8 @@ public class AlphaPatternScanner implements PatternScanner {
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
+        if (!enabled) return Optional.empty();
+
         AlphaDailyState alpha = resolveAlphaState(bar.symbol());
 
         if (!alpha.valid()) {

@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

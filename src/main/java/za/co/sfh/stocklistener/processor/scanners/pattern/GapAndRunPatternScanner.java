@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +57,9 @@ public class GapAndRunPatternScanner implements PatternScanner {
     @Value("${patterns.gap-and-run.require-above-premarket-high:false}")
     private boolean requireAbovePremarketHigh;
 
+    @Value("${patterns.gap-and-run.enabled:true}")
+    private boolean enabled;
+
     @Override
     public boolean shouldStore() {
         return storeSignal;
@@ -64,6 +67,8 @@ public class GapAndRunPatternScanner implements PatternScanner {
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
+        if (!enabled) return Optional.empty();
+
         if (state.getCandles().size() < 2) return Optional.empty();
 
         AggregateMinuteBar[] arr = state.getCandles().toArray(new AggregateMinuteBar[0]);

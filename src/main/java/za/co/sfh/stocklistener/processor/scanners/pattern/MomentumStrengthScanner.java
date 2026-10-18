@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +111,9 @@ public class MomentumStrengthScanner implements PatternScanner {
     @Value("${patterns.momentum.pct-change-bars:5}")
     private int pctChangeBars;
 
+    @Value("${patterns.momentum.enabled:true}")
+    private boolean enabled;
+
     // ── PatternScanner contract ───────────────────────────────────────────────
 
     @Override
@@ -120,6 +123,8 @@ public class MomentumStrengthScanner implements PatternScanner {
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
+        if (!enabled) return Optional.empty();
+
         List<AggregateMinuteBar> candles = state.getCandles();
         if (candles.size() < 20) return Optional.empty();
 

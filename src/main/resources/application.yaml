@@ -101,6 +101,7 @@ filter:
 
 patterns:
   breakout:
+    enabled: false            # disabled — scalping focus
     stop: 0.9
     target: 1.05
     storeSignal: false
@@ -114,6 +115,7 @@ patterns:
     target: 1.06
     storeSignal: false
   htf:
+    enabled: false               # disabled — scalping focus
     target: 1.15                 # price target multiplier (entry × target)
     storeSignal: false           # disabled until validated in live session
     min-advance-pct: 30.0        # minimum % advance leading to the pole top (over ~20 trading days)
@@ -123,6 +125,7 @@ patterns:
     min-consolidation-days: 5    # minimum flag days before a breakout can trigger
     volume-multiplier: 1.5       # minute-bar volume must exceed avgVolume × this on breakout
   grinding-momentum:
+    enabled: false               # disabled — scalping focus
     stop: 0.97                   # stop-loss multiplier (entry × stop)
     target: 1.05                 # price target multiplier (entry × target)
     storeSignal: true
@@ -135,6 +138,7 @@ patterns:
     min-cumulative-volume: 200000 # minimum total session volume — rejects illiquid tickers
     min-window-avg-volume-ratio: 0.5  # avg volume across lookback window must be >= avgVolume × this (0 = disabled)
   gap-and-run:
+    enabled: false                     # disabled — scalping focus
     stop: 0.92                         # stop-loss multiplier (entry × stop)
     target: 1.10                       # price target multiplier (entry × target)
     storeSignal: true
@@ -147,6 +151,7 @@ patterns:
     sustained-volume-min-bars: 2       # at least this many of those bars must have volume ≥ avgVolume
     require-above-premarket-high: false # set true to only fire when gap opens above the pre-market high
   alpha:
+    enabled: false               # disabled — scalping focus
     target: 1.20                 # price target multiplier (entry × target)
     storeSignal: false           # disabled until validated in live session
     min-advance-pct: 40.0        # minimum % advance from base to peak (the steep climb)
@@ -158,6 +163,7 @@ patterns:
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:
+    enabled: false              # disabled — scalping focus
     stop: 0.97                  # stop-loss multiplier (entry × stop)
     target: 1.06                # price target multiplier (entry × target)
     storeSignal: true           # emit confirmed signals to SignalStore
@@ -212,6 +218,15 @@ scoring:
 
 stockwatch:
   valid-days: 60   # how long a symbol stays on the watch list before expiring
+
+scalping:
+  rumours:
+    john-wick-reversal:
+      enabled: true
+      reward-ratio: 2.0             # target = entry + (entry - stop) × this
+      min-setup-drop-pct: 0.1       # setup bar must drop at least this % open→close
+      min-wick-body-ratio: 2.0      # lower wick must be ≥ this × body size
+      require-volume-confirmation: false  # set true to require entry bar vol ≥ wick bar vol
 
 paper-trading:
   account-size: 100000        # total paper account size in USD

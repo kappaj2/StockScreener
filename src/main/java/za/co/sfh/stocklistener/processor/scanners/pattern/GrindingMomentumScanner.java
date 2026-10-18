@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,6 +63,9 @@ public class GrindingMomentumScanner implements PatternScanner {
     @Value("${patterns.grinding-momentum.min-window-avg-volume-ratio:0.5}")
     private double minWindowAvgVolumeRatio;
 
+    @Value("${patterns.grinding-momentum.enabled:true}")
+    private boolean enabled;
+
     @Override
     public boolean shouldStore() {
         return storeSignal;
@@ -70,6 +73,8 @@ public class GrindingMomentumScanner implements PatternScanner {
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
+        if (!enabled) return Optional.empty();
+
         // Need 1 base bar + lookbackBars window bars (current bar is the last window bar)
         if (state.getCandles().size() < lookbackBars + 1) return Optional.empty();
 

@@ -32,7 +32,11 @@
       "Bash(javap -classpath /Users/andrekapp/.m2/repository/com/vaadin/vaadin-grid-flow/25.0.8/vaadin-grid-flow-25.0.8.jar com.vaadin.flow.component.grid.Grid)",
       "Bash(python3 *)",
       "Bash(curl -s http://localhost:8000/api/bars/ARTL)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(mkdir -p /opt/java-code/springkodierer/SpringKordierer/stocklistener/src/main/java/za/co/sfh/stocklistener/processor/aggregators)",
+      "Bash(mkdir -p /opt/java-code/springkodierer/SpringKordierer/stocklistener/src/main/java/za/co/sfh/stocklistener/processor/scanners/scalping)",
+      "Bash(./mvnw clean *)",
+      "Bash(./mvnw package *)"
     ]
   }
 }

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
-import za.co.sfh.stocklistener.processor.scanners.BreakoutPatternScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.BreakoutPatternScanner;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 
 import java.lang.reflect.Field;
@@ -69,7 +69,10 @@ class BarReplayTest {
         org.mockito.Mockito.when(highWatchStockService.findBySymbol(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(java.util.Optional.empty());
 
-        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService);
+        za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator fiveMinuteBarAggregator =
+                new za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator(List.of(), signalStore);
+
+        AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService, fiveMinuteBarAggregator);
         injectFilterDefaults(handler);
 
         MessageProcessor processor = new MessageProcessor(objectMapper, List.of(handler), Optional.empty());
