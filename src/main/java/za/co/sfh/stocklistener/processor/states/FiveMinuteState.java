@@ -28,6 +28,9 @@ public final class FiveMinuteState {
     private static final int    EMA_PERIOD     = 9;
     private static final double EMA_MULTIPLIER = 2.0 / (EMA_PERIOD + 1);
 
+    // ATR period — 14 bars is standard; matches the 1-min RSI period but on 5-min timeframe
+    private static final int ATR_PERIOD = 14;
+
     private final ArrayDeque<FiveMinuteBar> bars = new ArrayDeque<>();
 
     private String symbol;
@@ -51,6 +54,11 @@ public final class FiveMinuteState {
     private double currentDayLow  = Double.MAX_VALUE;
     private LocalDate sessionDate = null;
 
+    // Wilder's smoothed ATR on 5-min bars
+    private double atr = 0;
+    private int    atrBars = 0;
+    private double atrSeedSum = 0;
+
     public void addBar(FiveMinuteBar bar) {
         if (symbol == null) {
             symbol = bar.symbol();
@@ -59,6 +67,7 @@ public final class FiveMinuteState {
         rollSessionIfNeeded(bar);
         updateVwap(bar);
         updateEma9(bar);
+        updateAtr(bar);
 
         bars.addLast(bar);
         if (bars.size() > MAX_BARS) {
@@ -102,6 +111,27 @@ public final class FiveMinuteState {
             ema9 = emaSeedSum / EMA_PERIOD;
         } else {
             ema9 = bar.close() * EMA_MULTIPLIER + ema9 * (1 - EMA_MULTIPLIER);
+        }
+    }
+
+    private void updateAtr(FiveMinuteBar bar) {
+        // True range for the first bar is simply the bar's range (no prior close available)
+        FiveMinuteBar prev = bars.peekLast();
+        double trueRange = prev == null
+                ? bar.range()
+                : Math.max(bar.high() - bar.low(),
+                  Math.max(Math.abs(bar.high() - prev.close()),
+                           Math.abs(bar.low()  - prev.close())));
+
+        atrBars++;
+        if (atrBars < ATR_PERIOD) {
+            atrSeedSum += trueRange;
+        } else if (atrBars == ATR_PERIOD) {
+            atrSeedSum += trueRange;
+            atr = atrSeedSum / ATR_PERIOD;
+        } else {
+            // Wilder's smoothing: ATR = (prevATR × (n-1) + TR) / n
+            atr = (atr * (ATR_PERIOD - 1) + trueRange) / ATR_PERIOD;
         }
     }
 

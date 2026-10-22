@@ -53,9 +53,17 @@ public class JohnWickReversalScanner implements ScalpingPatternScanner {
     @Value("${scalping.rumers.john-wick-reversal.require-volume-confirmation:false}")
     private boolean requireVolumeConfirmation;
 
-    // All three bar lows (setup, wick, entry) must be within this % of the wick bar's low
-    @Value("${scalping.rumers.john-wick-reversal.max-low-divergence-pct:1.5}")
+    // Setup bar (red candle) must be at least this multiple of ATR — filters trivial dips
+    @Value("${scalping.rumers.john-wick-reversal.min-setup-atr-multiple:0.5}")
+    private double minSetupAtrMultiple;
+
+    // Setup bar low must be within this % of the wick bar's low — they share a support zone
+    @Value("${scalping.rumers.john-wick-reversal.max-low-divergence-pct:1.0}")
     private double maxLowDivergencePct;
+
+    // Entry bar low must not breach the wick bar's low by more than this % — ensures the bounce held
+    @Value("${scalping.rumers.john-wick-reversal.max-entry-low-breach-pct:0.2}")
+    private double maxEntryLowBreachPct;
 
     @Override
     public Optional<BreakoutSignal> scan(FiveMinuteBar bar, FiveMinuteState state) {
@@ -80,6 +88,20 @@ public class JohnWickReversalScanner implements ScalpingPatternScanner {
         if (setupDropPct < minSetupDropPct) {
             log.debug("[JWR] [{}] setup bar drop {}% < min {}%", bar.symbol(), setupDropPct, minSetupDropPct);
             return Optional.empty();
+        }
+
+        // 1b. Setup bar range must be >= minSetupAtrMultiple × ATR — rejects trivially small red candles
+        double atr = state.getAtr();
+        if (atr > 0) {
+            double minSize = minSetupAtrMultiple * atr;
+            if (setupBar.range() < minSize) {
+                log.debug("[JWR] [{}] setup bar range {} < {}× ATR ({}) — skipping",
+                        bar.symbol(),
+                        String.format("%.4f", setupBar.range()),
+                        minSetupAtrMultiple,
+                        String.format("%.4f", atr));
+                return Optional.empty();
+            }
         }
 
         // 2. Wick bar must be a bullish John Wick (dominant lower wick)
@@ -110,15 +132,23 @@ public class JohnWickReversalScanner implements ScalpingPatternScanner {
             return Optional.empty();
         }
 
-        // 5. All three lows must cluster within maxLowDivergencePct% of the wick bar's low —
-        //    confirms a genuine support level rather than an isolated spike
-        double wickLow    = wickBar.low();
-        double tolerance  = wickLow * (maxLowDivergencePct / 100.0);
-        double setupDelta = Math.abs(setupBar.low() - wickLow);
-        double entryDelta = Math.abs(entryBar.low() - wickLow);
-        if (setupDelta > tolerance || entryDelta > tolerance) {
-            log.debug("[JWR] [{}] lows not clustered — setupLow={} wickLow={} entryLow={} tolerance={}",
-                    bar.symbol(), setupBar.low(), wickLow, entryBar.low(), String.format("%.4f", tolerance));
+        // 5. Setup bar low must be close to the wick bar's low — they define the same support zone
+        double wickLow       = wickBar.low();
+        double setupTolerance = wickLow * (maxLowDivergencePct / 100.0);
+        double setupDelta     = Math.abs(setupBar.low() - wickLow);
+        if (setupDelta > setupTolerance) {
+            log.debug("[JWR] [{}] setup low too far from wick low — setupLow={} wickLow={} delta={} tolerance={}",
+                    bar.symbol(), setupBar.low(), wickLow,
+                    String.format("%.4f", setupDelta), String.format("%.4f", setupTolerance));
+            return Optional.empty();
+        }
+
+        // 6. Entry bar low must not breach the wick bar's low — the bounce must hold
+        double entryBreachTolerance = wickLow * (maxEntryLowBreachPct / 100.0);
+        if (entryBar.low() < wickLow - entryBreachTolerance) {
+            log.debug("[JWR] [{}] entry bar breached wick low — entryLow={} wickLow={} breach={}",
+                    bar.symbol(), entryBar.low(), wickLow,
+                    String.format("%.4f", wickLow - entryBar.low()));
             return Optional.empty();
         }
 

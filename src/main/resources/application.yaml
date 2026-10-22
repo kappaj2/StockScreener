@@ -227,9 +227,11 @@ scalping:
       enabled: true
       reward-ratio: 2.0             # target = entry + (entry - stop) × this
       min-setup-drop-pct: 0.1       # setup bar must drop at least this % open→close
+      min-setup-atr-multiple: 0.5   # setup (red) bar range must be ≥ this multiple of the 14-bar ATR
       min-wick-body-ratio: 2.0      # lower wick must be ≥ this × body size
       require-volume-confirmation: false  # set true to require entry bar vol ≥ wick bar vol
-      max-low-divergence-pct: 1.5        # setup/entry lows must be within this % of the wick bar low
+      max-low-divergence-pct: 1.0        # setup bar low must be within this % of the wick bar low (shared support zone)
+      max-entry-low-breach-pct: 0.2     # entry bar low must not breach the wick bar low by more than this % (bounce must hold)
 
 paper-trading:
   account-size: 100000        # total paper account size in USD
