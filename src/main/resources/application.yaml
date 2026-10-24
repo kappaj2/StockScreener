@@ -223,8 +223,12 @@ stockwatch:
 
 scalping:
   rumers:
-    john-wick-reversal:
+    opening-range-reversal:
       enabled: true
+      sma-period: 50              # number of daily bars for the trend-bias SMA
+      min-atr-pct: 0.25           # opening range move must be ≥ 25% of the 14-bar 5-min ATR
+    john-wick-reversal:
+      enabled: false
       reward-ratio: 2.0             # target = entry + (entry - stop) × this
       min-setup-drop-pct: 0.1       # setup bar must drop at least this % open→close
       min-setup-atr-multiple: 0.5   # setup (red) bar range must be ≥ this multiple of the 14-bar ATR

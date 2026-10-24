@@ -17,7 +17,8 @@ public enum PatternType {
     GAP_AND_RUN("GAR"),
     GRINDING_MOMENTUM("GM"),
     ALPHA_PATTERN("AP"),
-    JOHN_WICK_REVERSAL("JWR");
+    JOHN_WICK_REVERSAL("JWR"),
+    OPENING_RANGE_REVERSAL("ORR");
 
     private final String code;
 }
