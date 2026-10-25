@@ -34,7 +34,7 @@ class SignalHistoryRepositoryIntegrationTest implements DatabaseContainerTest {
                 signalId, symbol, PatternType.BREAKOUT,
                 10.0, 9.0, 11.0,
                 90, "medium", "rule-based breakout", timestamp,
-                10.5, 9.5, null, highWatch
+                10.5, 9.5, null, highWatch, Double.NaN
         );
         return SignalHistoryEntity.from(signal);
     }

@@ -1,0 +1,1 @@
+CALL AddColumnUnlessExists('stock', 'five_minute_bar', 'rvol', 'DECIMAL(10, 4) NOT NULL DEFAULT 1.0000', 'vwap');

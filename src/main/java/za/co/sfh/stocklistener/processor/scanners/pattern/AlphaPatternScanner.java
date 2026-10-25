@@ -112,7 +112,7 @@ public class AlphaPatternScanner implements PatternScanner {
         log.info("[ALPHA] Breakout confirmed [symbol={}; close={}; resistance={}; higherLows={}; volume={}]",
                 bar.symbol(), bar.close(), alpha.resistanceLevel(), alpha.bottomCount(), bar.volume());
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.ALPHA_PATTERN,

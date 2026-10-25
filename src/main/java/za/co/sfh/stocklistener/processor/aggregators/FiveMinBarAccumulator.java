@@ -45,7 +45,7 @@ final class FiveMinBarAccumulator {
 
     FiveMinuteBar build() {
         double vwap = totalVolume > 0 ? cumulativePV / totalVolume : 0;
-        return new FiveMinuteBar(symbol, open, high, low, close, totalVolume, vwap, startTime, endTime);
+        return FiveMinuteBar.withoutRvol(symbol, open, high, low, close, totalVolume, vwap, startTime, endTime);
     }
 
     void reset() {

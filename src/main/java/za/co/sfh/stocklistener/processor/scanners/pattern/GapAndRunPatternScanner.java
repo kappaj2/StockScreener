@@ -113,7 +113,7 @@ public class GapAndRunPatternScanner implements PatternScanner {
         log.info("Gap and Run [symbol: {}; gapPct: {}; bodyRatio: {}; volume: {}; avgVolume: {}; cumulativeVolume: {}]",
                 bar.symbol(), gapPct, bodyRatio, bar.volume(), state.getAvgVolume(), state.getCumulativeVolume());
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.GAP_AND_RUN,

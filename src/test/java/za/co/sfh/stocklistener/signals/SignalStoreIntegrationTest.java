@@ -37,7 +37,7 @@ class SignalStoreIntegrationTest implements DatabaseContainerTest {
                 "integration-id-1", "AAPL", PatternType.BREAKOUT,
                 10.0, 9.0, 11.0,
                 90, "medium", "rule-based breakout", 1_000L,
-                10.5, 9.5, null, false
+                10.5, 9.5, null, false, Double.NaN
         );
 
         signalStore.add(signal);

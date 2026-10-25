@@ -236,6 +236,15 @@ scalping:
       require-volume-confirmation: false  # set true to require entry bar vol ≥ wick bar vol
       max-low-divergence-pct: 1.0        # setup bar low must be within this % of the wick bar low (shared support zone)
       max-entry-low-breach-pct: 0.2     # entry bar low must not breach the wick bar low by more than this % (bounce must hold)
+  smb:
+    breakout-no-catalyst:
+      enabled: true
+      min-resistance-score: 6         # minimum 0–10 level score to consider the level significant
+      lookback-days: 60               # calendar days of daily bars to scan for resistance touches
+      resistance-zone-pct: 0.5        # tolerance (% of price) for grouping daily highs into a cluster
+      min-pre-breakout-rvol: 1.0      # at least one of the two bars before entry must have RVOL ≥ this
+      breakout-volume-multiple: 1.5   # breakout bar volume must be ≥ this × session average volume
+      reward-ratio: 2.0               # target = entry + (entry - stop) × this
 
 paper-trading:
   account-size: 100000        # total paper account size in USD

@@ -145,6 +145,26 @@ public class SignalView extends VerticalLayout {
                 .setSortable(true)
                 .setResizable(true);
         grid.addComponentColumn(signal -> {
+            if (!signal.hasRvol()) {
+                Span na = new Span("-");
+                na.getStyle().set("color", "#8b949e");
+                return na;
+            }
+            double rvol = signal.rvol();
+            String text = String.format("%.2f", rvol);
+            Span span = new Span(text);
+            if (rvol >= 2.0) {
+                span.getStyle().set("color", "#ff7b72").set("font-weight", "600");
+            } else if (rvol >= 1.5) {
+                span.getStyle().set("color", "#ffa657");
+            } else if (rvol >= 1.0) {
+                span.getStyle().set("color", "#3fb950");
+            } else {
+                span.getStyle().set("color", "#8b949e");
+            }
+            return span;
+        }).setHeader("RVOL").setAutoWidth(true).setFlexGrow(0).setSortable(false).setResizable(true);
+        grid.addComponentColumn(signal -> {
             Span newsSpan = new Span(signal.news() != null ? signal.news() : "");
             newsSpan.getStyle().set("white-space", "normal").set("word-break", "break-word");
             return newsSpan;

@@ -158,7 +158,7 @@ public class GrindingMomentumScanner implements PatternScanner {
         log.info("Grinding momentum [symbol: {}; netAdvancePct: {}; higherCloses: {}/{}; baseClose: {}; currentClose: {}; cumulativeVolume: {}]",
                 bar.symbol(), netAdvancePct, higherCloses, lookbackBars, baseClose, bar.close(), state.getCumulativeVolume());
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.GRINDING_MOMENTUM,

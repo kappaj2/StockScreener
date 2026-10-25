@@ -83,7 +83,7 @@ public class HighTightFlagScanner implements PatternScanner {
         log.info("[HTF] Breakout [symbol={}; close={}; flagHigh={}; flagLow={}; volume={}]",
                 bar.symbol(), bar.close(), htf.consolidationHigh(), htf.consolidationLow(), bar.volume());
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.HIGH_TIGHT_FLAG,

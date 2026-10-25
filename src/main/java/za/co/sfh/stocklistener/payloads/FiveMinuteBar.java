@@ -19,8 +19,20 @@ public record FiveMinuteBar(
         long   volume,
         double vwap,
         ZonedDateTime startTime,   // bar-open time (minute 0 of the 5-min window)
-        ZonedDateTime endTime      // bar-close time (end of minute 4 of the 5-min window)
+        ZonedDateTime endTime,     // bar-close time (end of minute 4 of the 5-min window)
+        double rvol                // relative volume vs same time slot on the previous trading day
 ) {
+    /** Convenience factory — used when RVOL is not yet available (e.g. first session). */
+    public static FiveMinuteBar withoutRvol(String symbol, double open, double high, double low,
+                                            double close, long volume, double vwap,
+                                            ZonedDateTime startTime, ZonedDateTime endTime) {
+        return new FiveMinuteBar(symbol, open, high, low, close, volume, vwap, startTime, endTime, Double.NaN);
+    }
+
+    public boolean hasRvol() {
+        return !Double.isNaN(rvol);
+    }
+
     public double range() {
         return high - low;
     }

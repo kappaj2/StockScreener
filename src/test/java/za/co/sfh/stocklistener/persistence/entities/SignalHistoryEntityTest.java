@@ -17,7 +17,7 @@ class SignalHistoryEntityTest {
                 "abc-123", "TSLA", PatternType.HIGH_TIGHT_FLAG,
                 123.45, 110.0, 145.0,
                 85, "low", "rule-based HTF", 1_700_000_000_000L,
-                124.0, 121.5, "Some headline", true
+                124.0, 121.5, "Some headline", true, Double.NaN
         );
 
         SignalHistoryEntity entity = SignalHistoryEntity.from(signal);

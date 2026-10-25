@@ -18,7 +18,8 @@ public enum PatternType {
     GRINDING_MOMENTUM("GM"),
     ALPHA_PATTERN("AP"),
     JOHN_WICK_REVERSAL("JWR"),
-    OPENING_RANGE_REVERSAL("ORR");
+    OPENING_RANGE_REVERSAL("ORR"),
+    BREAKOUT_NO_CATALYST("BNC");
 
     private final String code;
 }

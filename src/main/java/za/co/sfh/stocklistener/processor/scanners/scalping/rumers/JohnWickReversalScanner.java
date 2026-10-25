@@ -178,7 +178,8 @@ public class JohnWickReversalScanner implements ScalpingPatternScanner {
                 0,
                 0,
                 null,
-                false
+                false,
+                bar.rvol()
         ));
     }
 }

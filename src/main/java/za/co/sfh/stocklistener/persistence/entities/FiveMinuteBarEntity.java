@@ -48,6 +48,9 @@ public class FiveMinuteBarEntity {
     @Column(precision = 18, scale = 6)
     private BigDecimal vwap;
 
+    @Column(nullable = false, precision = 10, scale = 4)
+    private BigDecimal rvol;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -67,6 +70,7 @@ public class FiveMinuteBarEntity {
                 .closePrice(BigDecimal.valueOf(bar.close()))
                 .volume(bar.volume())
                 .vwap(BigDecimal.valueOf(bar.vwap()))
+                .rvol(BigDecimal.valueOf(bar.hasRvol() ? bar.rvol() : 1.0))
                 .build();
     }
 }

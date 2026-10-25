@@ -36,7 +36,8 @@
       "Bash(mkdir -p /opt/java-code/springkodierer/SpringKordierer/stocklistener/src/main/java/za/co/sfh/stocklistener/processor/aggregators)",
       "Bash(mkdir -p /opt/java-code/springkodierer/SpringKordierer/stocklistener/src/main/java/za/co/sfh/stocklistener/processor/scanners/scalping)",
       "Bash(./mvnw clean *)",
-      "Bash(./mvnw package *)"
+      "Bash(./mvnw package *)",
+      "Bash(./mvnw test-compile *)"
     ]
   }
 }

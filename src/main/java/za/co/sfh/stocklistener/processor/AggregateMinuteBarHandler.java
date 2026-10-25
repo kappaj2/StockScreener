@@ -121,7 +121,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
                     BreakoutSignal toStore = onHighWatch
                             ? new BreakoutSignal(s.id(), s.symbol(), s.pattern(), s.entry(), s.stop(),
                                     s.target(), s.confidence(), s.risk(), s.notes(), s.timestamp(),
-                                    s.preMarketHigh(), s.preMarketLow(), s.news(), true)
+                                    s.preMarketHigh(), s.preMarketLow(), s.news(), true, s.rvol())
                             : s;
                     if (onHighWatch) {
                         log.info("[{}] HIGH WATCH match — {} → displaying as HW_{}", s.symbol(), s.pattern(), s.pattern().getCode());

@@ -81,7 +81,7 @@ public class BreakoutPatternScanner implements PatternScanner {
         log.debug("Previous bar [{}]", previousBar);
         log.debug("This bar [{}]", bar);
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.BREAKOUT,

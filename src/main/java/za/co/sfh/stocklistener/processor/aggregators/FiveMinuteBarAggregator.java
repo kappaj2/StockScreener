@@ -8,6 +8,7 @@ import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 import za.co.sfh.stocklistener.payloads.FiveMinuteBar;
 import za.co.sfh.stocklistener.persistence.entities.FiveMinuteBarEntity;
 import za.co.sfh.stocklistener.persistence.repositories.FiveMinuteBarRepository;
+import za.co.sfh.stocklistener.processor.indicators.RelativeVolumeIndicator;
 import za.co.sfh.stocklistener.processor.scanners.scalping.ScalpingPatternScanner;
 import za.co.sfh.stocklistener.processor.states.FiveMinuteState;
 import za.co.sfh.stocklistener.signals.SignalStore;
@@ -45,6 +46,7 @@ public class FiveMinuteBarAggregator {
     private final List<ScalpingPatternScanner> scalpingScanner;
     private final SignalStore signalStore;
     private final FiveMinuteBarRepository fiveMinuteBarRepository;
+    private final RelativeVolumeIndicator rvolIndicator;
 
     private final ConcurrentHashMap<String, FiveMinBarAccumulator> accumulators = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, FiveMinuteState>       stateMap     = new ConcurrentHashMap<>();
@@ -92,15 +94,21 @@ public class FiveMinuteBarAggregator {
         acc.add(bar);
 
         if (acc.isComplete()) {
-            FiveMinuteBar fiveMin = acc.build();
+            FiveMinuteBar raw = acc.build();
             acc.reset();
+
+            double rvol = computeRvol(raw);
+            FiveMinuteBar fiveMin = new FiveMinuteBar(
+                    raw.symbol(), raw.open(), raw.high(), raw.low(), raw.close(),
+                    raw.volume(), raw.vwap(), raw.startTime(), raw.endTime(), rvol);
 
             FiveMinuteState state = stateMap.computeIfAbsent(fiveMin.symbol(), s -> new FiveMinuteState());
             state.addBar(fiveMin);
 
-            log.debug("[{}] 5-min bar closed — O={} H={} L={} C={} V={} VWAP={}",
+            log.debug("[{}] 5-min bar closed — O={} H={} L={} C={} V={} VWAP={} RVOL={}",
                     fiveMin.symbol(), fiveMin.open(), fiveMin.high(), fiveMin.low(),
-                    fiveMin.close(), fiveMin.volume(), String.format("%.4f", fiveMin.vwap()));
+                    fiveMin.close(), fiveMin.volume(), String.format("%.4f", fiveMin.vwap()),
+                    fiveMin.hasRvol() ? String.format("%.2f", fiveMin.rvol()) : "n/a");
 
             persistFiveMinuteBarAsync(fiveMin);
             runScalpingScanners(fiveMin, state);
@@ -113,6 +121,15 @@ public class FiveMinuteBarAggregator {
 
     public Optional<FiveMinuteState> getState(String symbol) {
         return Optional.ofNullable(stateMap.get(symbol));
+    }
+
+    private double computeRvol(FiveMinuteBar bar) {
+        try {
+            return rvolIndicator.compute(bar);
+        } catch (Exception e) {
+            log.warn("[{}] RVOL computation failed", bar.symbol(), e);
+            return Double.NaN;
+        }
     }
 
     private void persistFiveMinuteBarAsync(FiveMinuteBar bar) {

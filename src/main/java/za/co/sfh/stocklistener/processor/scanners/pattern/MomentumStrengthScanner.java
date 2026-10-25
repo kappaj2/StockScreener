@@ -210,7 +210,7 @@ public class MomentumStrengthScanner implements PatternScanner {
     private Optional<BreakoutSignal> buildSignal(AggregateMinuteBar bar, SymbolState state,
                                                   MomentumTier tier, int confidence,
                                                   String risk, String notes) {
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 tier.patternType,

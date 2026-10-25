@@ -72,8 +72,11 @@ class BarReplayTest {
         za.co.sfh.stocklistener.persistence.repositories.FiveMinuteBarRepository fiveMinuteBarRepository =
                 mock(za.co.sfh.stocklistener.persistence.repositories.FiveMinuteBarRepository.class);
 
+        za.co.sfh.stocklistener.processor.indicators.RelativeVolumeIndicator rvolIndicator =
+                new za.co.sfh.stocklistener.processor.indicators.RelativeVolumeIndicator(fiveMinuteBarRepository);
+
         za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator fiveMinuteBarAggregator =
-                new za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator(List.of(), signalStore, fiveMinuteBarRepository);
+                new za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator(List.of(), signalStore, fiveMinuteBarRepository, rvolIndicator);
 
         AggregateMinuteBarHandler handler = new AggregateMinuteBarHandler(objectMapper, signalStore, List.of(breakoutScanner), dontDiddleInTheMiddle, minuteBarRepository, highWatchStockService, fiveMinuteBarAggregator);
         injectFilterDefaults(handler);
