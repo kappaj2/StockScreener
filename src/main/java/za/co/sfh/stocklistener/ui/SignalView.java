@@ -95,7 +95,12 @@ public class SignalView extends VerticalLayout {
         institutionsBtn.getStyle().set("color", "#8b949e");
         institutionsBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("institutions")));
 
-        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn);
+        Button journalBtn = new Button("Journal");
+        journalBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        journalBtn.getStyle().set("color", "#8b949e");
+        journalBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/journal")));
+
+        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn, journalBtn);
 
         // Grid container
         Div gridWrapper = new Div();
@@ -144,6 +149,26 @@ public class SignalView extends VerticalLayout {
                 .setHeader("PM Low")
                 .setSortable(true)
                 .setResizable(true);
+        grid.addComponentColumn(signal -> {
+            if (!signal.hasRvol()) {
+                Span na = new Span("-");
+                na.getStyle().set("color", "#8b949e");
+                return na;
+            }
+            double rvol = signal.rvol();
+            String text = String.format("%.2f", rvol);
+            Span span = new Span(text);
+            if (rvol >= 2.0) {
+                span.getStyle().set("color", "#ff7b72").set("font-weight", "600");
+            } else if (rvol >= 1.5) {
+                span.getStyle().set("color", "#ffa657");
+            } else if (rvol >= 1.0) {
+                span.getStyle().set("color", "#3fb950");
+            } else {
+                span.getStyle().set("color", "#8b949e");
+            }
+            return span;
+        }).setHeader("RVOL").setAutoWidth(true).setFlexGrow(0).setSortable(false).setResizable(true);
         grid.addComponentColumn(signal -> {
             Span newsSpan = new Span(signal.news() != null ? signal.news() : "");
             newsSpan.getStyle().set("white-space", "normal").set("word-break", "break-word");

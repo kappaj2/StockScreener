@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,7 +83,7 @@ public class UnsharpenPatternScanner implements PatternScanner {
         log.info("[{}] Unsharpen pattern confirmed — johnWickHigh={}, close={}, stop={}, target={}",
                 bar.symbol(), johnWickBar.high(), entry, stop, target);
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.UNSHARPEN_MASK,

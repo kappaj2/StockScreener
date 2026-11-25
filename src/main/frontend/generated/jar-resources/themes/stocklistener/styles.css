@@ -1,0 +1,22 @@
+/* Tighten base background to match GitHub dark palette */
+[theme~="dark"] {
+  --lumo-base-color: #0d1117;
+}
+
+/* Full page background — covers area below the grid when rows are sparse */
+html, body {
+  background: #0d1117;
+  min-height: 100%;
+}
+
+/* Tooltip overlay dark styling */
+vaadin-tooltip-overlay::part(overlay) {
+  background: #1c2128;
+  border: 1px solid #30363d;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+
+vaadin-tooltip-overlay::part(content) {
+  color: #7ee787;
+}

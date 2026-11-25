@@ -11,10 +11,10 @@ import za.co.sfh.stocklistener.processor.indicators.MacdIndicator;
 import za.co.sfh.stocklistener.processor.indicators.RocIndicator;
 import za.co.sfh.stocklistener.processor.indicators.RsiIndicator;
 import za.co.sfh.stocklistener.processor.indicators.VolumeProfileIndicator;
-import za.co.sfh.stocklistener.processor.scanners.BreakoutPatternScanner;
-import za.co.sfh.stocklistener.processor.scanners.InvertedVeePatternScanner;
-import za.co.sfh.stocklistener.processor.scanners.MomentumStrengthScanner;
-import za.co.sfh.stocklistener.processor.scanners.UnsharpenPatternScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.BreakoutPatternScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.InvertedVeePatternScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.MomentumStrengthScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.UnsharpenPatternScanner;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.signals.BreakoutSignal;
 

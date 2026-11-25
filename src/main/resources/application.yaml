@@ -73,8 +73,10 @@ server:
 cron:
   purge:
     minute-bar: "0 0 20 * * *"
+    five-minute-bar: "0 0 20 * * *"
   partition:
     add-next: "0 0 20 * * *"
+    five-minute-add-next: "0 0 20 * * *"
   daily-summary:
     run: "0 0 2 * * MON-SAT"   # 02:00 ET weekdays + Saturday (covers Friday's data)
 
@@ -101,6 +103,7 @@ filter:
 
 patterns:
   breakout:
+    enabled: false            # disabled — scalping focus
     stop: 0.9
     target: 1.05
     storeSignal: false
@@ -114,6 +117,7 @@ patterns:
     target: 1.06
     storeSignal: false
   htf:
+    enabled: false               # disabled — scalping focus
     target: 1.15                 # price target multiplier (entry × target)
     storeSignal: false           # disabled until validated in live session
     min-advance-pct: 30.0        # minimum % advance leading to the pole top (over ~20 trading days)
@@ -123,6 +127,7 @@ patterns:
     min-consolidation-days: 5    # minimum flag days before a breakout can trigger
     volume-multiplier: 1.5       # minute-bar volume must exceed avgVolume × this on breakout
   grinding-momentum:
+    enabled: false               # disabled — scalping focus
     stop: 0.97                   # stop-loss multiplier (entry × stop)
     target: 1.05                 # price target multiplier (entry × target)
     storeSignal: true
@@ -135,6 +140,7 @@ patterns:
     min-cumulative-volume: 200000 # minimum total session volume — rejects illiquid tickers
     min-window-avg-volume-ratio: 0.5  # avg volume across lookback window must be >= avgVolume × this (0 = disabled)
   gap-and-run:
+    enabled: false                     # disabled — scalping focus
     stop: 0.92                         # stop-loss multiplier (entry × stop)
     target: 1.10                       # price target multiplier (entry × target)
     storeSignal: true
@@ -147,6 +153,7 @@ patterns:
     sustained-volume-min-bars: 2       # at least this many of those bars must have volume ≥ avgVolume
     require-above-premarket-high: false # set true to only fire when gap opens above the pre-market high
   alpha:
+    enabled: false               # disabled — scalping focus
     target: 1.20                 # price target multiplier (entry × target)
     storeSignal: false           # disabled until validated in live session
     min-advance-pct: 40.0        # minimum % advance from base to peak (the steep climb)
@@ -158,6 +165,7 @@ patterns:
   dont-diddle:
     percentage: 30    # suppress signals whose entry is within the middle X% of yesterday's range
   momentum:
+    enabled: false              # disabled — scalping focus
     stop: 0.97                  # stop-loss multiplier (entry × stop)
     target: 1.06                # price target multiplier (entry × target)
     storeSignal: true           # emit confirmed signals to SignalStore
@@ -212,6 +220,31 @@ scoring:
 
 stockwatch:
   valid-days: 60   # how long a symbol stays on the watch list before expiring
+
+scalping:
+  rumers:
+    opening-range-reversal:
+      enabled: true
+      sma-period: 50              # number of daily bars for the trend-bias SMA
+      min-atr-pct: 0.25           # opening range move must be ≥ 25% of the 14-bar 5-min ATR
+    john-wick-reversal:
+      enabled: false
+      reward-ratio: 2.0             # target = entry + (entry - stop) × this
+      min-setup-drop-pct: 0.1       # setup bar must drop at least this % open→close
+      min-setup-atr-multiple: 0.5   # setup (red) bar range must be ≥ this multiple of the 14-bar ATR
+      min-wick-body-ratio: 2.0      # lower wick must be ≥ this × body size
+      require-volume-confirmation: false  # set true to require entry bar vol ≥ wick bar vol
+      max-low-divergence-pct: 1.0        # setup bar low must be within this % of the wick bar low (shared support zone)
+      max-entry-low-breach-pct: 0.2     # entry bar low must not breach the wick bar low by more than this % (bounce must hold)
+  smb:
+    breakout-no-catalyst:
+      enabled: true
+      min-resistance-score: 6         # minimum 0–10 level score to consider the level significant
+      lookback-days: 60               # calendar days of daily bars to scan for resistance touches
+      resistance-zone-pct: 0.5        # tolerance (% of price) for grouping daily highs into a cluster
+      min-pre-breakout-rvol: 1.0      # at least one of the two bars before entry must have RVOL ≥ this
+      breakout-volume-multiple: 1.5   # breakout bar volume must be ≥ this × session average volume
+      reward-ratio: 2.0               # target = entry + (entry - stop) × this
 
 paper-trading:
   account-size: 100000        # total paper account size in USD

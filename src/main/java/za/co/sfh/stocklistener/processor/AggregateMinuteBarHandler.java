@@ -10,6 +10,7 @@ import tools.jackson.databind.ObjectMapper;
 import za.co.sfh.stocklistener.payloads.AggregateMinuteBar;
 import za.co.sfh.stocklistener.persistence.entities.MinuteBarEntity;
 import za.co.sfh.stocklistener.persistence.repositories.MinuteBarRepository;
+import za.co.sfh.stocklistener.processor.aggregators.FiveMinuteBarAggregator;
 import za.co.sfh.stocklistener.processor.scanners.DontDiddleInTheMiddle;
 import za.co.sfh.stocklistener.processor.states.SymbolState;
 import za.co.sfh.stocklistener.processor.stockwatch.HighWatchStockService;
@@ -37,6 +38,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
     private final DontDiddleInTheMiddle dontDiddleInTheMiddle;
     private final MinuteBarRepository minuteBarRepository;
     private final HighWatchStockService highWatchStockService;
+    private final FiveMinuteBarAggregator fiveMinuteBarAggregator;
     private final ConcurrentHashMap<String, SymbolState> stateMap = new ConcurrentHashMap<>();
     private final ExecutorService persistenceExecutor = Executors.newSingleThreadExecutor();
 
@@ -101,6 +103,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
         var state = stateMap.computeIfAbsent(bar.symbol(), s -> new SymbolState());
 
         state.addBar(bar);
+        fiveMinuteBarAggregator.offer(bar);
 
         log.debug("Statemap size: {}; bar time ET: {}", stateMap.size(), bar.startTimestampMs());
 
@@ -118,7 +121,7 @@ public class AggregateMinuteBarHandler implements MessageHandler {
                     BreakoutSignal toStore = onHighWatch
                             ? new BreakoutSignal(s.id(), s.symbol(), s.pattern(), s.entry(), s.stop(),
                                     s.target(), s.confidence(), s.risk(), s.notes(), s.timestamp(),
-                                    s.preMarketHigh(), s.preMarketLow(), s.news(), true)
+                                    s.preMarketHigh(), s.preMarketLow(), s.news(), true, s.rvol())
                             : s;
                     if (onHighWatch) {
                         log.info("[{}] HIGH WATCH match — {} → displaying as HW_{}", s.symbol(), s.pattern(), s.pattern().getCode());

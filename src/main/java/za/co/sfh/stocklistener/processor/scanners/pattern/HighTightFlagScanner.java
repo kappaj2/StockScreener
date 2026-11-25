@@ -1,4 +1,4 @@
-package za.co.sfh.stocklistener.processor.scanners;
+package za.co.sfh.stocklistener.processor.scanners.pattern;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +50,9 @@ public class HighTightFlagScanner implements PatternScanner {
     @Value("${patterns.htf.volume-multiplier:1.5}")
     private double volumeMultiplier;
 
+    @Value("${patterns.htf.enabled:true}")
+    private boolean enabled;
+
     private final DailyBarSummaryRepository dailyRepo;
 
     // Per-symbol cache; invalidated when the trading date changes
@@ -62,6 +65,8 @@ public class HighTightFlagScanner implements PatternScanner {
 
     @Override
     public Optional<BreakoutSignal> scan(AggregateMinuteBar bar, SymbolState state) {
+        if (!enabled) return Optional.empty();
+
         HtfDailyState htf = resolveHtfState(bar.symbol());
 
         if (!htf.valid()) {
@@ -78,7 +83,7 @@ public class HighTightFlagScanner implements PatternScanner {
         log.info("[HTF] Breakout [symbol={}; close={}; flagHigh={}; flagLow={}; volume={}]",
                 bar.symbol(), bar.close(), htf.consolidationHigh(), htf.consolidationLow(), bar.volume());
 
-        return Optional.of(new BreakoutSignal(
+        return Optional.of(BreakoutSignal.withoutRvol(
                 UUID.randomUUID().toString(),
                 bar.symbol(),
                 PatternType.HIGH_TIGHT_FLAG,

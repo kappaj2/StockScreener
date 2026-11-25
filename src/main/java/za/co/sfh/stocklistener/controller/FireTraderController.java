@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import za.co.sfh.stocklistener.processor.scanners.FireTraderPatternScanner;
+import za.co.sfh.stocklistener.processor.scanners.pattern.FireTraderPatternScanner;
 
 @Slf4j
 @RestController

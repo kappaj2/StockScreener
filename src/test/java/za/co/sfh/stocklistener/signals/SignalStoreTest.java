@@ -42,7 +42,7 @@ class SignalStoreTest {
                 id, symbol, PatternType.BREAKOUT,
                 10.0, 9.0, 11.0,
                 90, "medium", "rule-based breakout", timestamp,
-                10.5, 9.5, null, false
+                10.5, 9.5, null, false, Double.NaN
         );
     }
 
