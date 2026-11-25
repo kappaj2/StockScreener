@@ -1,25 +1,22 @@
-/* Enable dark color scheme globally */
-html {
-  color-scheme: dark;
-}
-
-/* Overrides for Lumo dark mode */
+/* Tighten base background to match GitHub dark palette */
 [theme~="dark"] {
   --lumo-base-color: #0d1117;
 }
 
-/* Base styles for compatibility when the theme attribute is set on html/body */
-:host, html {
-  --lumo-base-color: #0d1117;
+/* Full page background — covers area below the grid when rows are sparse */
+html, body {
+  background: #0d1117;
+  min-height: 100%;
 }
 
-/* Tooltip: use a light text colour so it is readable against the dark overlay */
+/* Tooltip overlay dark styling */
 vaadin-tooltip-overlay::part(overlay) {
-  color: #e6edf3;
   background: #1c2128;
   border: 1px solid #30363d;
+  font-size: 0.85rem;
+  padding: 6px 10px;
 }
 
-vaadin-tooltip-overlay {
-  --lumo-body-text-color: #e6edf3;
+vaadin-tooltip-overlay::part(content) {
+  color: #7ee787;
 }

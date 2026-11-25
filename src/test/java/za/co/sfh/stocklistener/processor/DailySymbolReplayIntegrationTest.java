@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  * Integration test that runs the full Spring context and feeds a fixture file
  * into the MessageProcessor to verify that signals are generated and stored.
  */
+@Disabled("Requires Docker/Testcontainers")
 @SpringBootTest
 @ActiveProfiles("test")
 class DailySymbolReplayIntegrationTest implements DatabaseContainerTest {

@@ -95,7 +95,12 @@ public class SignalView extends VerticalLayout {
         institutionsBtn.getStyle().set("color", "#8b949e");
         institutionsBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("institutions")));
 
-        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn);
+        Button journalBtn = new Button("Journal");
+        journalBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        journalBtn.getStyle().set("color", "#8b949e");
+        journalBtn.addClickListener(e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/journal")));
+
+        header.add(rocket, title, liveIndicator, clearAllButton, institutionsBtn, journalBtn);
 
         // Grid container
         Div gridWrapper = new Div();

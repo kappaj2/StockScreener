@@ -1,0 +1,21 @@
+CREATE TABLE trade_journal (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trade_date      DATE            NOT NULL,
+    ticker          VARCHAR(20)     NOT NULL,
+    direction       VARCHAR(10)     NOT NULL COMMENT 'LONG or SHORT',
+    entry_price     DECIMAL(18,6)   NOT NULL,
+    stop_price      DECIMAL(18,6)   NOT NULL,
+    exit_price      DECIMAL(18,6)   NULL,
+    timeframe       VARCHAR(20)     NULL,
+    setup           VARCHAR(50)     NOT NULL,
+    cycle_context   VARCHAR(50)     NULL,
+    followed_plan   TINYINT(1)      NULL,
+    screenshot_url  VARCHAR(500)    NULL,
+    what_went_well  VARCHAR(1000)   NULL,
+    what_to_improve VARCHAR(1000)   NULL,
+    signal_id       VARCHAR(36)     NULL COMMENT 'soft FK to signal_history.signal_id',
+    created_at      DATETIME        NOT NULL,
+    updated_at      DATETIME        NOT NULL,
+    INDEX idx_trade_journal_date   (trade_date),
+    INDEX idx_trade_journal_ticker (ticker)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

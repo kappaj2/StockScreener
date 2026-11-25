@@ -37,7 +37,9 @@
       "Bash(mkdir -p /opt/java-code/springkodierer/SpringKordierer/stocklistener/src/main/java/za/co/sfh/stocklistener/processor/scanners/scalping)",
       "Bash(./mvnw clean *)",
       "Bash(./mvnw package *)",
-      "Bash(./mvnw test-compile *)"
+      "Bash(./mvnw test-compile *)",
+      "Bash(xargs -I{} sh -c 'jar tf {} 2>/dev/null | grep -l \"vaadin-tooltip\" && echo {}')",
+      "Bash(./mvnw spring-boot:run -q)"
     ]
   }
 }
